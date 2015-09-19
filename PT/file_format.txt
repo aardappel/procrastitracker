@@ -1,0 +1,30 @@
+The information below should be sufficient for a programmer to read the database files, if required
+
+The whole file is written thru zlib, so can be read with that, or first unpacked with gzip
+
+struct DATABASE {
+	int version (== 10, as of v1.6, format may be different if other version)
+	int magic (== 'PTFF' on x86)
+	int numtags
+	struct { char name[32]; int color; } tags[numtags]
+	int minfilter
+	int foldlevel
+	int prefs[6] (see advanced prefs window)
+	NODE root
+}
+
+struct NODE {
+	char *name (null terminated bytes)
+	int tagindex
+	char ishidden
+	int numberofdays
+	DAY days[numberofdays]
+	int numchildren
+	NODE children[numchildren]
+}
+
+struct DAY {
+	unsigned short day (lower 5 bits = day, next 4 bits = month, rest = year counted from 2000)
+	unsigned short firstminuteused (counted from midnight)
+	int activeseconds, semiidleseconds, key, lmb, rmb, scrollwheel
+}

@@ -1,0 +1,208 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_PROCRASTITRACKER    ICON                    "procrastitracker.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 22, 17, 122, 49
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_CAPTION | WS_SYSMENU
+CAPTION "About"
+FONT 8, "Trebuchet MS", 400, 0, 0x0
+BEGIN
+    LTEXT           "ProcrastiTracker Version 2.1",IDC_STATIC,10,4,101,8,SS_NOPREFIX
+    LTEXT           "by Wouter van Oortmerssen",IDC_STATIC,10,13,101,8
+    DEFPUSHBUTTON   "OK",IDOK,79,30,30,11,WS_GROUP
+    LTEXT           "http://procrastitracker.com/",IDC_STATIC,10,22,101,8
+END
+
+IDD_PROPPAGE_LARGE DIALOGEX 0, 0, 541, 351
+STYLE DS_SETFONT | DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "Statistics View"
+FONT 8, "Trebuchet MS", 400, 0, 0x0
+BEGIN
+    CONTROL         "",IDC_SLIDER1,"msctls_trackbar32",TBS_AUTOTICKS | TBS_BOTH | WS_TABSTOP,7,11,86,21
+    LTEXT           "Expanded Level:",IDC_STATIC,7,4,64,8
+    EDITTEXT        IDC_EDIT2,7,46,80,12,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Filter < Minutes:",IDC_STATIC,7,37,64,8
+    CONTROL         "",IDC_DATETIMEPICKER1,"SysDateTimePick32",DTS_RIGHTALIGN | WS_TABSTOP,7,99,78,12
+    CONTROL         "",IDC_DATETIMEPICKER2,"SysDateTimePick32",DTS_RIGHTALIGN | WS_TABSTOP,7,114,78,12
+    GROUPBOX        "Date Range",IDC_STATIC,4,87,86,65
+    CONTROL         "Filter on tag",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,325,64,10
+    CONTROL         "",IDC_LIST1,"SysListView32",LVS_SMALLICON | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SHAREIMAGELISTS | LVS_NOLABELWRAP | LVS_EDITLABELS | LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,165,78,126,WS_EX_RIGHT
+    GROUPBOX        "Tagging",IDC_STATIC,4,154,86,183
+    PUSHBUTTON      "Apply Tag to Node",IDC_BUTTON2,7,293,78,14
+    LTEXT           "Hover over graph...",IDC_STATICHO,8,341,79,8
+    PUSHBUTTON      "Rename Tag",IDC_BUTTON3,7,309,78,14
+    CONTROL         "",IDC_TREE1,"SysTreeView32",TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_DISABLEDRAGDROP | TVS_SHOWSELALWAYS | TVS_INFOTIP | WS_BORDER | WS_HSCROLL | WS_TABSTOP,123,0,321,349
+    EDITTEXT        IDC_EDIT8,7,71,80,12,ES_AUTOHSCROLL
+    LTEXT           "Filter on sub-string:",IDC_STATIC,7,62,64,8
+    COMBOBOX        IDC_COMBO1,8,137,77,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Quick Set:",IDC_STATIC,10,128,34,8
+END
+
+IDD_PROPPAGE_MEDIUM DIALOGEX 0, 0, 216, 91
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_CAPTION | WS_SYSMENU
+CAPTION "Advanced Settings"
+FONT 8, "Trebuchet MS", 400, 0, 0x0
+BEGIN
+    EDITTEXT        IDC_EDIT1,160,7,49,12,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Sample Frequency (Seconds)",IDC_STATIC,7,7,111,9
+    EDITTEXT        IDC_EDIT3,160,20,49,12,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Idle Time (Seconds)",IDC_STATIC,7,22,109,9
+    EDITTEXT        IDC_EDIT4,160,33,49,12,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Semi Idle Time (Seconds)",IDC_STATIC,7,35,111,9
+    EDITTEXT        IDC_EDIT5,160,46,49,12,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Autosave interval (Minutes)",IDC_STATIC,7,48,111,9
+    EDITTEXT        IDC_EDIT6,160,59,49,12,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Cull on Load (Seconds)",IDC_STATIC,7,61,111,9
+    LTEXT           "Show dialog when away less than (Minutes)",IDC_STATIC,7,75,148,9
+    EDITTEXT        IDC_EDIT7,160,72,49,12,ES_AUTOHSCROLL | ES_NUMBER
+END
+
+IDD_AWAYDIALOG DIALOGEX 0, 0, 267, 195
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "ProcrastiTracker away time"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "You were away for 5 minutes, what was your primary activity?",IDC_STATIC,7,7,253,23
+    PUSHBUTTON      "Phone Call",IDC_BUTTON1,7,42,121,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Commute or Travel",IDC_BUTTON4,139,77,121,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Reading",IDC_BUTTON5,7,59,121,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Meeting or Discussion",IDC_BUTTON6,7,24,121,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Writing",IDC_BUTTON7,7,77,121,14,NOT WS_TABSTOP
+    DEFPUSHBUTTON   "Don't Track This Time",IDC_BUTTON8,7,174,253,14
+    PUSHBUTTON      "Activity B",IDC_BUTTON9,139,131,121,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Thinking",IDC_BUTTON10,7,95,121,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Shopping or Errants",IDC_BUTTON11,139,59,121,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Eating / Drinking",IDC_BUTTON12,139,42,121,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Social",IDC_BUTTON13,139,24,121,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Sleep or Rest",IDC_BUTTON14,139,95,121,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Activity A",IDC_BUTTON15,139,113,121,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Bathroom Break",IDC_BUTTON16,7,131,121,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Using Mobile or Other Device",IDC_BUTTON18,7,113,121,14,NOT WS_TABSTOP
+    LTEXT           "Or instead:",IDC_STATIC,7,156,253,16
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        RIGHTMARGIN, 121
+        BOTTOMMARGIN, 48
+    END
+
+    IDD_PROPPAGE_LARGE, DIALOG
+    BEGIN
+        RIGHTMARGIN, 482
+        BOTTOMMARGIN, 349
+    END
+
+    IDD_PROPPAGE_MEDIUM, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 209
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 84
+    END
+
+    IDD_AWAYDIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 260
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 188
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP1             BITMAP                  "dot3.bmp"
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

@@ -1,0 +1,266 @@
+<HTML>
+<HEAD>
+<TITLE>ProcrastiTracker</TITLE>
+<style type="text/css">
+<!--
+.style9 {font-family: Verdana, Arial, Helvetica, sans-serif}
+.style11 {font-family: Verdana, Arial, Helvetica, sans-serif; font-size: large; }
+.style13 {font-family: Verdana, Arial, Helvetica, sans-serif; font-size: small; }
+.style14 {font-size: small}
+.style20 {font-size: 48px}
+.style23 {font-size: x-large}
+.style24 {
+	font-weight: bold;
+}
+-->
+</style></HEAD>
+<BODY>
+<CENTER>
+    <p class="style9">
+
+<span class="style20">ProcrastiTracker</span><BR>
+  <I>Spying on yourself was never this much fun!</I>
+</p>
+    <table border="0" cellspacing="6" cellpadding="0">
+      <tr>
+        <td><p class="style9 style23"><span class="style9"><a href="#about"><img src="images/statistics_small.jpg" width="374" height="319" align="top"></a></span></p>        </td>
+        <td align="left" valign="top"><span class="style9 style23"><span class="style9"><a href="#about">About<br>
+        </a><a href="#features">Features<br>
+        </a><a href="#usage">Usage<br>
+        </a><a href="#download"><em><strong>Download</strong></em></a><a href="#buy"><br>
+        </a> <a href="#author">Author</a> </span></span></td>
+      </tr>
+    </table>
+    <p class="style9">&nbsp;     </p>
+    <p>
+
+  <TABLE WIDTH=800 cellpadding=10 cellspacing=2 border=0 style="">
+  <TR><TD style="background-color: #003300; color: #FFFFFF; width: 796px;">
+      <span class="style11">
+    <a name="about">About</a></span></TD></TR>
+  <TR><TD style="width: 796px">
+      <span class="style13">
+  ProcrastriTracker is a <em>time tracking tool</em> that automatically tracks what applications and documents you use, and allows you to view statistics on your usage in great detail.
+  It is written to be small and non-intrusive. It is
+          useful for:      </span>
+      <ul>
+          <li class="style13"><em><strong>Increasing your productivity</strong></em>: seeing long term stats on
+            what really is costing you the most time can help shift priorities to work more optimally. </li>
+          <li class="style13"><em><strong>Tracking and billing time</strong></em>: when working on multiple projects
+              / for multiple clients, nearly automatically!          </li>
+          <li class="style13"><em><strong>Fun!</strong></em> Seeing such detailed statistics is plain interesting,
+              especially over longer time, even if you don't intend to do anything with it. </li>
+      </ul>
+
+
+  </TD></TR>
+
+
+
+<TR><TD style="background-color: #003300; color: #FFFFFF; width: 796px;">
+    <span class="style11"><a name="features">Features</a></span></TD></TR>
+  <TR><TD style="width: 796px">
+  <ul>
+      <li class="style9"><span class="style14"><strong><em>Most detailed statistics of any timetracking app</em></strong>: ProcrastriTracker doesn't just track documents and web sites for every application, it gathers information fully hierarchically, meaning
+      that you can see documents on a per project basis (such as in visual studio). This happens fully automatically, any application or web site that deals with data in an hierarchical fashion, and shows items in its title bar seperated by " - ", " | ", " : ", &quot; &gt; &quot; or &quot;\&quot; will be represented hierarchically. </span></li>
+      <li class="style13"><strong><em>Filtering</em></strong>: the statistics view allows you to quickly drill down to subsets of the data, fold/unfold trees, limit displayed entries to a particular date range, tag, or minimum number of seconds used (to reduce clutter) </li>
+      <li class="style13"><strong><em>Tagging</em></strong>: allows you to group items to better track different uses and different projects. Tags color the bargraphs for an instant view. Tags work hierarchically, so items are counted as tagged like their parent unless you tag them explicitly. </li>
+      <li class="style13"><strong><em>Precise Idle time</em></strong>: takes into account the time when you are semi idle (default 10 seconds of inactivity) and fully idle (default 3 minutes of inactivity) for a more accurate picture of how much time was truely spent on an item. </li>
+      <li class="style13"><strong><em>Written for efficiency</em></strong>: Procrastitracker uses a custom database that uses very little memory, can be updated quickly, and has a highly compressed on-disk representation. It is also using straight win32 for reduced DLL footprint. It is so tiny, you won't know its there :)      </li>
+      <li class="style13"><strong><em>HTML Export</em></strong>: export the data using the current filters to a very readable HTML layout for easy sharing with other people. </li>
+      <li class="style13"><strong><em>Backups</em></strong>: automated saving (default every 10 minutes) and backups both per save and per run make sure you never lose data on system crashes, and allow you to easily go back to a previous database in the unlikely event of database corruption. </li>
+      <li class="style13"><strong><em>Automated culling</em></strong>: Older items in the database that were used for very few seconds are culled, and their stats added to the parent item. This keeps timing accurate but reduces on clutter and database size. </li>
+      <li class="style13"><strong><em>Input activity statistics</em></strong>: for every item, the amount of keyboard and mouseclicks are counted. </li>
+      <li class="style14"><span class="style9"><strong><em>Compatability</em></strong>: Every version of ProcrastiTracker still loads databases from the earliest versions, and will continue to do so. This guarantees that you can run it for years, and gather some impressive statistics, meanwhile being able to get new features. Data is stored in a relatively generic way so that the representation can evolve even if the data doesn't.
+      </span>
+      <li class="style13"><strong><em>Configurable</em></strong>: Every timing setting can be tweaked to suit the way you work.      </li>
+  </ul>
+  </TD></TR>
+  <TR><TD style="background-color: #003300; color: #FFFFFF; width: 796px;">
+    <span class="style11"><a name="usage">Usage</a></span></TD></TR>
+  <TR><TD style="width: 796px">
+        <span class="style9"><img id="IMG1" src="images/trayicon.jpg" style=""><br />
+        <span class="style14">After installing, run ProcrastiTracker from the start menu. The installer also puts a link in your "Startup" folder, so ProcrastiTracker will run automatically upon reboot. </span></span>        <p class="style14">
+            <span class="style9">        ProcrastiTracker runs in your system tray, and by defaults checks every 5 seconds what application (and document/site/title) you are using, and enters this into its database. If you haven't used the mouse/keyboard for more than 3 minutes, it stops checking (to make sure statistics are acurate when you walk away from your computer). It saves its internal database every 10 minutes, so data collection is fully automatic.            </span>
+
+  <p class="style14">
+      <span class="style9">
+          <img id="IMG2" src="images/popup.jpg"><br />
+  At any time, you can use the pop-up menu from the tray icon to pull up the statistics window, and view your usage in a variety of ways:    </span>
+  <p class="style14">
+          <span class="style9"><img id="IMG3" src="images/statistics.jpg"><br />
+          </span>
+  <p class="style14">
+      <span class="style9">
+  The main tree view shows ranked in order of most use all items with total time, including sub-items. The top level are application names (from their .exe), and below that a hierarchical tree based on the window title that was active at the time (how effective this is depends on the application).
+  Web browsers (supported: firefox, IE and Opera) additionally have as their second level in the hierarchy the domain name of the active page, so you get your statistics grouped by site.      </span>
+  <p class="style14">
+      <span class="style9">
+  The background of the tree view is a bar graph, where the color(s) correspond to the different tags applied to the item (if multiple different tags are used on sub items, the bar will be subdivided accordingly).      </span>
+  <p class="style14">
+      <span class="style9">
+  To the left are filtering options, you can use the slider to quickly set how far the tree is expanded for all nodes (you can of course also do this manually per node). Use the seconds filter to not show (but still count) any items below the given seconds, this allows you to get a better overview without clutter in larger databases.
+  Use the date range popups to see data only for a specified period (defaults to viewing the entire database).      </span>
+  <p class="style14">
+      <span class="style9">Below this is a list of "tags" you can apply to tree nodes,
+          which allows you to group activities and get a better overview. You can apply the
+          currently selected tag to the currently selected tree node using the button. Note
+          how this makes the tag the default for all nodes below it too, but you can still
+          categorize sub tree items differently (you can for example mark "firefox" as "surfing"
+          by default, but certain sites below it you can mark as "work"). The UNTAGGED tag
+          is special in that setting it makes the node assume whatever tag its parents uses.
+          You can rename tags similarly to files in windows explorer: by double clicking on an already
+          selected tag (or click the &quot;Rename Tag&quot; button). Check the "filter on tag" box to see stats only for the current tag (as opposed to all tags). This is useful for seeing the time spent in a particular
+          category.&nbsp;</span>
+  <p class="style14"><span class="style9">HTML export (in the popup menu) works using the current seconds filtering settings (tag, date and keyword filters, but not culling/expansion filters), so be sure to set those first. Similarly, database export allows you to export part or all of the database (based on the same filtering settings), that can then later be merged elsewhere.
+        </span>
+      <p class="style14">
+      <span class="style9">
+  Advanced settings can be set by opening them up from the popup:      </span>
+  <p class="style14">
+          <span class="style9"><img id="IMG4" src="images/settings.jpg"><br />
+          </span>
+  <p class="style14">
+      <span class="style9">
+  In most cases, there should be no need to change these. All of these setting are <em>per database</em>. Defaults are as per the screenshot.&nbsp;</span>
+  <table style="" border=1 cellpadding=6 cellspacing=0>
+  <tr><td class="style14">
+      <span class="style9"><strong><em>Sample Frequency</em></strong></span></td><td class="style13">Allows you to set how often a new entry is added to the database. More frequently could give slightly more accurate stats, but not noticably so. Less frequently could reduce cpu usage of ProcrastiTracker, but that is already negligable.</td></tr>
+  <tr><td class="style14">
+      <span class="style9"><strong><em>Idle Time</em></strong></span></td><td class="style13">Specifies how long it takes after the last input before ProcrastiTracker stops collecting data. The higher you set this, the more time that you are not really behind your computer gets included in the statistics. Setting it lower however may not be a good idea either, if you're the kind of person that tends to stare at the screen for longer while working. To get the most accurate statistics, a balance must be sought depending on your work habits.</td></tr>
+  <tr><td class="style14">
+      <span class="style9"><strong><em>Semi Idle time</em></strong></span></td><td class="style13">This specifies when a sample counts as semi-idle, i.e. more than the semi idle limit, but less than fully idle. This statistic is shown as the percentage semi idle time, and allows you to see how actively you use an application (e.g. a movie viewer will likely have more semi idle time than a video game), or which documents you were more "productive" on (less semi idle means more continuous work flow).</td></tr>
+  <tr><td class="style14">
+      <span class="style9"><strong><em>Autosave Interval</em></strong></span></td><td class="style13">How often the internal database is saved to disk. Longer intervals mean more samples lost on system crashes, but reduce disk activity. ProcrastiTracker's database files are small however (can be kept under 100k easily) so the resulting disk activity should not disturb any other application.</td></tr>
+  <tr><td class="style14">
+      <span class="style9"><strong><em>Cull on Load</em></strong></span></td><td class="style13">This allows you to cull (prune) items in the database that have only accumulated very few seconds, by merging them into their parent. This has the beneficial effect of reducing clutter (especially for those apps that use their title bar for progress updates), reducing memory and disk usage (smaller database). It is probably a good idea to slowly increase this number as your database grows, i.e. using it for many months. Since culling happens on load, you have to re-start ProcrastiTracker for this to take effect. One of the advantages of it happening on Load is that it gives items the opportunity to accumulate more seconds on independent occurrances, and thus not be culled immediately.</td></tr>
+  <tr><td class="style14">
+      <span class="style9"><strong><em>Show dialog when away less than (minutes)</em></strong></span></td><td class="style13">A way to account for time away from the computer. It is by default off (0). To turn it on, set the amount of minutes less than which is considered a break in between computer usage (e.g. 60, meaning breaks longer than that are not considered part of your work day anymore).
+  When you are away for longer than the time in your idle setting (and less than your maximum break setting), upon return a window will pop up asking you what you spent the time on. Right now these are not configurable, sorry, though there is a variety of them and 2 custom ones.
+  You can also choose to not track this time with the bottom button.
+  Time tracked this way will appear under the "Away" heading in the main view.
+  If you ignore the dialog, the time will not get tracked.</p><p><img id="IMG3" src="images/awaydialog.jpg"></p></td></tr>
+</table>
+  <p class="style14">
+      <span class="style9">
+  Keyboard shortcuts: 'H' hides the currently selected item in the treeview (hidden items still accumulate time etc, they are just not shown). 'U' unhides all hidden nodes below the selected node. Hidden items are also not exported in HTML.
+  Merge functionality (experimental, actions cannot be undone, use at your own risk!): You can either merge in a whole database into the current database using the Merge in Database option in the popup menu (useful if you have used procrastitracker on multiple computers at once), and you can also merge individual treenodes by selecting the node you want to merge, followed by selecting the node you want to merge into, and then pressing 'M'. Pressing 'P' on a node will cause all sibling node that have it as a substring to be mergerd into it. In all cases, and subtrees these nodes may have will be correctly merged too. If you are unsure, first quite PT so you have a fresh backup.
+
+   </span>
+  <p>  <span class="style13">Database management: the installer provides a shortcut to where all database files are stored. This allows you to restore old databases in case of an emergency (just rename the one with the date you want to "db.PT"), backup the database on other media, move the database to a new machine, delete old backups to save space, etc. </span></TD>
+  </TR>
+
+
+
+
+
+<TR><TD style="background-color: #003300; color: #FFFFFF; width: 796px;">
+    <span class="style11"><a name="download">Download</a></span></TD></TR>
+  <TR><TD style="height: 21px; width: 796px;"><p class="style13">ProcrastiTracker is freeware, enjoy!</p>
+      <p class="style13">By the nature of what it does, it is not portable at all, and only runs on Windows.</p>
+      <p class="style13">
+      <a href="http://strlen.com/procrastitracker/ProcrastiTracker_Setup.exe" class="style24">DOWNLOAD for Vista 32/64, Windows 7 32/64, Windows 8 untested</a> (latest version)</p><p class="style13">
+      <a href="http://strlen.com/procrastitracker/ProcrastiTracker_Setup14.exe" class="style24">DOWNLOAD for Windows XP</a> (version 1.4)
+      </p>
+      <p></TD></TR>
+
+<TR>
+    <TD style="background-color: #003300; color: #FFFFFF; width: 796px;">
+      <span class="style11"><a name="history">History</a></span></TD>
+  </TR>
+  <TR>
+    <TD style="height: 21px; width: 796px;">
+      <table width="800" border="1" cellspacing="0" cellpadding="6">
+        <tr>
+          <td class="style9">2.1</td>
+          <td><ul>
+            <li class="style13">Shrunk the statistics view a bit, so it fits better on smaller screens.</li>
+            <li class="style13">Added a few more tags.</li>
+            <li class="style13">Fixed a bug related to really long urls.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="style9">1.9</td>
+          <td><ul>
+            <li class="style13">HTML export now obeys (most) filter settings.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="style9">1.8</td>
+          <td><ul>
+            <li class="style13">Unicode characters in window titles and exe names are now properly displayed in the statistics view.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="style9">1.7</td>
+          <td><ul>
+            <li class="style13">Lowered the compression on the database to avoid zlib taking up a lot of time on database saves</li>
+            <li class="style13">Comes with file format spec, to allow anyone to process the data.</li>
+            <li class="style13">Fixed problem whereby input hooks could cause input freeze on longer running tasks by running hooks on its own thread.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="style9">1.6</td>
+          <td><ul>
+            <li class="style13">Added a "filter by sub string" feature</li>
+            <li class="style13">Added quick set options to see data for a day/week/month/year etc.</li>
+            <li class="style13">Added a way to account for time away from the computer. To turn this feature on, read the instructions for advanced settings above.</li>
+            <li class="style13">Added a way to export a subset of the database according the filter settings of the current statistics view. This can be used with the merging feature that already existed to selectively move things from one database to another.</li>
+            <li class="style13">Reduced memory usage yet again (to almost half, using only a few megs to store years worth of activity!).</li>
+            <li class="style13">Fixed bug whereby certain applications (mostly games) wouldn't report activity, and made it less intrusive in the process (no more DLL injection).</li>
+            <li class="style13">Added Google Chrome to the executables it queries for the current URL through DDE, so this will start working as soon as Google adds DDE support.</li>
+            <li class="style13">Added a feature to manually adjust time for any node: press C on a selected node to input additional time.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="style9">1.4</td>
+          <td><ul>
+            <li class="style13">When database corruption occurs, it now informs the user rather than spinning its wheels endlessly. Database corruption can happen if the computer is rebooted while PT tries to save, this however easy to fix by restoring the last database backup that PT makes on each run, see the database files start menu entry.</li>
+            <li class="style13">Made the default cull on load value a lot higher (5 minutes) to reduce memory usage for those that never tweak this setting.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="style9">1.3</td>
+          <td><ul class="style14">
+            <li class="style9">Added merging functionality, both for whole databases or individual nodes.</li>
+            <li class="style9">The treeview now remembers which nodes where expended when it does a full refresh.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="style9">1.2</td>
+          <td><ul class="style14">
+            <li class="style9">Added &quot;Rename Tag&quot; button</li>
+            <li class="style9">Added additional title seperators</li>
+            <li class="style9">Fixed UI layout on vista</li>
+            <li class="style9">Fixed PT not being able to query the executable name of 64bit processes on vista, and all ending up under (null).</li>
+          </ul></td>
+        </tr>
+                <tr>
+          <td class="style9">1.1</td>
+          <td><ul class="style14">
+            <li class="style9">windows rebooting/crashing while the database is being saved is not a problem anymore</li>
+            <li class="style9">changed tray menu to open on left double click or right click, to conform to existing tray application behaviour</li>
+            <li class="style9">Fixed bugs related to &quot;no task bar icon&quot; on startup, cumulative timing, and redrawing</li>
+            <li class="style9">More robust  splitting of window titles into a hierarchy, now also splits on files/paths etc. Side effect may be that statistics of files may not coincide with statistics already gathered in 1.0 databases (sorry :).</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="style9">1.0</td>
+          <td class="style13">First public release! </td>
+        </tr>
+      </table>
+    <p>  </TD></TR>
+
+<TR><TD style="background-color: #003300; color: #FFFFFF; width: 796px;">
+    <span class="style11"><a name="author">Author</a></span></TD></TR>
+  <TR><TD style="height: 21px; width: 796px;">
+          <span class="style13">
+  (c) <a href="http://strlen.com/">
+        Wouter van Oortmerssen</a>.<br />
+              <br />
+              we make no claims as to suitability of this application for any use, we are not responsable for any undesirable consequences resulting directly or indirectly from its use (including, but not limited to, unhappyness over procrastination). If you enjoy more legal mumbo jumbo, read the full <a href="EULA.html">EULA</a>.</span>
+          <p>  </TD></TR>
+    </TABLE>
+</CENTER>
+</BODY>
+</HTML>

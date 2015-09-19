@@ -1,0 +1,228 @@
+open source it?
+
+
+- option to show the colored bars the entire length, rather than proportional
+-
+
+- export html freezes the computer for a bit, and may crash afterwards
+
+- add html export just for the view, and also as csv
+
+- add a feature to export the time spent on each tag per day as a CSV or HTML, very useful for people who track time for clients etc. See email exchange with David Hendy
+
+
+- a day view that somehow shows the starting time for each task?
+
+
+
+
+- hooks fail on winxp? -> they can use 1.4.. but is this fixable?
+
+
+
+- John McCann:
+Small Features/bugs
+
+
+
+·         Left clicking on the icon in the system tray does not appear to do anything (on windows 7 at least). It should open the app on the “View Statistics” page.
+
+·         I’d like to have the option of leaving gaps in the right hand graph view for days when I don’t use the computer at all (maybe with the option to include gaps for weekends)
+
+·         Would like to be able to click on the right hand graph view and have the date range settings automatically adjust to show the day you’ve clicked on.
+
+·         The ability to add extra Tags! 10 doesn’t seem to be quite enough...
+
+·         Timeline view – View the tasks you did during the day arranged chronologically rather than by type
+
+
+
+1. The ability to password protect the log, so it's a little harder
+for other folks to open it up;
+
+That sounds like a good idea, yes.
+
+2. The ability for the user to add/remove additional tags (I often
+have more projects going than just 3);
+
+You can reuse some of the other 7 for projects as well, but yeah, more would be good. The UI is a bit simplistic :)
+
+3. The ability to delete items from the log;
+
+You can hide (see keyboard shortcuts on http://strlen.com/procrastitracker/ ). You can also merge into the parent which can have the effect of delete.
+
+4. The ability to exclude certain activities from being tracked; and
+
+Again, hiding. But yeah, this could be another option.
+
+5. The ability to easily export log items as a .csv file.
+
+CSV data is a grid, this is a tree, so doesn't map quite as well, unless I duplicate the path along the tree.
+But yes, more export options would be good.
+
+
+Luxury Features
+
+
+
+·         Multiple user features.
+
+I see there’s a feature for merging in an external database. I think it could be very useful to enable the display of multiple databases within the same view, with the ability to display the user who the data corresponds to.
+
+Let me explain what I mean with a hypothetical example:
+
+I’m considering starting a small indie game studio with 3 friends. We all have different amounts of time we can spend on creating the games, so we are trying to figure out a fair system for sharing the massive profits we’ll make depending on who put the most actual work in to creating the game. We can use procrastitracker to figure out exactly how much work each person has done.
+
+
+
+
+- we have unicode in exename and title now, but not in urls (when percent encoded), can this be done also?
+
+
+- use http://msdn.microsoft.com/en-us/library/ms645536%28VS.85%29.aspx instead of hooks?
+
+
+
+- popup often ends up behind windows without me noticing.. and also should not the time that gap happened
+  see if the dialog has any window flags, maybe it should be modal on the main window?
+  can use BringWindowToTop function to bring either the main window or the dialog to the front
+
+  popup often comes like a minute after I am back at the computer?
+
+  popup often just sits there re-popping up even if I don't touch the controls every 20 secs or so
+
+add to this page: http://en.wikipedia.org/wiki/Comparison_of_time_tracking_software
+| [[ProcrastiTracker]]
+| [[Microsoft Windows]]
+| Automatic time tracking (by active window). Hierarchical (organized by exe/url/title components) with tagging/searching/filtering features. Graphs by topic and by day. Written to use minimize memory/CPU usage.
+| Exports to HTML.
+| Custom local database (mergable / migratable).
+| [[Freeware]]
+-> make ProcrastiTracker wiki page if link persists
+-> was removed, for either not having a page, or not being notable, or both. To have a page, presumably it also needs to be notable. Notable means it has plenty of external people referring to it, which may not be the case
+
+- seems like there's no examples anymore of misbehaving games since the change to LL mousehooks... maybe the hooks used to get killed on those games, either by the OS or the game?
+  - check with recent games!
+
+
+- optional dialog for exercise
+
+
+- client-server version
+  - server advanced setting
+    * blank = local
+    * "yes" = server
+    * ip = client
+
+file format changes:
+- server setting
+- client id
+- client id to name mapping
+- flag to cull at this tree level always
+- way to mark id in tree
+- custom away tasks?
+
+
+
+
+top things to make the gui better
+  multi-select on treeview for tagging
+  more tags, maybe sub-tags
+  seperate bars from text
+  add per tag per day timings on hover over (already can get this info when filtering down to one day, but doesn't hurt)
+  separate out exe view from day view
+  rather than a treeview, possibly just navigate to to subviews?
+  after inactivity, show dialog with quick presets about how you spent idle time?
+
+
+
+
+Martin Et Mišúth:
+First one I miss very much, would be ability to select single day by clicking on it in the rightmost pane, second one is that the number of tags one has at disposition is very limited. I would suggest user editable tags.
+The two others one are a bit hairy and heavy, and I believe quite complicated.
+1.) Searchbox like thunderbird has to search through nodes
+2.) Virtual nodes and autotag rules engine. With resizable dialog similar to hybrid of Thunderbird folders rules engine and Process monitor process selector, one could define custom nodes and auto tagged nodes.
+
+
+remove dot3labs refs
+
+move to parent feature (for NULL stuff) -> but must also add a feature to not have (null) as an exe name
+if ever wanted to do lots more work on it, be quicker to redo the UI with wxwidgets/WPF
+
+
+
+Peter:
+- Tagging based on substring search -> actually should be a persistent search such that it tags future elements
+- add new tags + colors
+
+
+Older:
+- fix print() along same lines as treeview (make onechild where parent has time accumulated a seperate hierarchy)
+- how to merge many numbered items? (google reader) & wrongly subdivide items? -> maybe do a select by string / tag or merge feature
+  or have a feature to recreate database by making strings out of existing database items
+  - tag all with substring below certain node
+- sometimes when opening the stats viewer, doesn't take into account recent stats
+- should not change folding when applying tag
+- pixel calculations for long bars are incorrect (rounding?)
+- should be able to switch tags while "filter on tag" selected -> or maybe not, because that way you can't change tags on those items easily
+- filter on substring? (search)
+- sometimes the hidden window steals input somehow? which stops normal windows from being reordered
+- also track/display idle time per day somewhere? (nieb)
+
+- feature: "filter on node": only shows the day view for that node... very useful!
+
+- logo web/about
+- double-click on time view to zoom in one day
+- fix bars as bitmaps / resolution dependency
+- doing things on selected items like applying tags collapses the tree - remember expanded nodes?
+- put "OK" buttons in dialogs
+- quick buttons for "all time" "last 7 days" etc.
+- make treeview always active window so it receives mousewheel events, not the slider etc
+- link in about to docs?
+- tooltip on tag names so longer tagnames become readable... or a scrollbar, or just make control a bit bigger
+- passw hiding - simply a number edit control that is the password both for hiding/unhiding
+- improve export: taking into account current tree folding / display tags
+- privacy features: password protect "unhide"
+- delete function
+- a way to get more tags
+- csv export.. other formats? xml?
+- list of strings (such as "mozilla firefox") that are filtered out if in a concatenated string
+- client-server version... both with prefixes, postfixes, and no fixes
+
+unresolved:
+-----------
+- big bug: many websites are in there twice, without url? -> should be fixed (DDE leak) <- DOUBLECHECK
+
+- gzopen can fail on write? (under heavy memory usage) -> maybe had something to do with handle leaking?
+- sometimes doesn't react to clicks in taskbar icon after long running time? but comes back
+- should its backup more often for computers that run for weeks?
+
+
+ideas for additional stats to gather:
+-------------------------------------
+- do stats on "commands"? F5 in VS etc. Load/Save/Paste.. keystrokes vs menu items selected? just per app?
+- get active child window... additional info in some apps like vs
+- location of mouseclicks (into a bitmap)
+- stuff from the current process (cpu usage? mem usage?)
+- network traffic
+- times of the day - averages, or, can actually store a "bitmap" of active moment for each day
+
+
+
+3 year stats:
+-------------
+- 12k nodes (60, + 12 for half of them for chain) = 792k in 18k objects
+	- 5k leafs
+	- 7k non-leaf
+		- 6500 one
+		- 500 ht	(64 or more a piece) = 64k
+- 7k stringpool entries (12 per chain + string) = 300k? in 7k objects
+- 60k days (28, or 32 for lday) == 1920k in 60k objects
+
+
+
+fileformat
+----------
+(gathered by searching for FF: in source)
+
+update in file_format.txt

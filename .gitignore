@@ -1,0 +1,5 @@
+procrastitracker/Release
+procrastitracker/Debug
+*.pdb
+*.ncb
+
