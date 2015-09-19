@@ -2,4 +2,6 @@ procrastitracker/Release
 procrastitracker/Debug
 *.pdb
 *.ncb
+*.iobj
+*.ipdb
 

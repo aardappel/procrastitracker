@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="std">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="app">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="app\db">
+      <UniqueIdentifier>{9f6c8f0a-e4b2-4f58-af58-f93590096352}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="app\win32">
+      <UniqueIdentifier>{53fae4b2-3760-46bf-8fa4-28c3580a9cad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="app\idle">
+      <UniqueIdentifier>{a12becf7-6a44-414e-baf7-a70603045aa7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="resources">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="zlib">
+      <UniqueIdentifier>{652d6c20-c1e7-46f0-b531-e6b9b4432a0e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\slaballoc.h">
+      <Filter>std</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\stdafx.h">
+      <Filter>std</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\tools.h">
+      <Filter>std</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\day.h">
+      <Filter>app\db</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\node.h">
+      <Filter>app\db</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\nodedb.h">
+      <Filter>app\db</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\away.h">
+      <Filter>app\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ddeutil.h">
+      <Filter>app\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\inputdlg.h">
+      <Filter>app\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\prefview.h">
+      <Filter>app\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\regview.h">
+      <Filter>app\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\statview.h">
+      <Filter>app\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\timercallback.h">
+      <Filter>app\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\win32tools.h">
+      <Filter>app\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\IdleTracker.h">
+      <Filter>app\idle</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>resources</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\stdafx.cpp">
+      <Filter>std</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\procrastitracker.cpp">
+      <Filter>app</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\inputdlg.cpp">
+      <Filter>app\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\IdleTracker.cpp">
+      <Filter>app\idle</Filter>
+    </ClCompile>
+    <ClCompile Include="..\zlib\adler32.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\zlib\compress.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\zlib\crc32.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\zlib\deflate.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\zlib\gzclose.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\zlib\gzlib.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\zlib\gzread.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\zlib\gzwrite.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\zlib\infback.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\zlib\inffast.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\zlib\inflate.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\zlib\inftrees.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\zlib\trees.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\zlib\uncompr.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\zlib\zutil.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="dot3.bmp">
+      <Filter>resources</Filter>
+    </Image>
+    <Image Include="icon1.ico">
+      <Filter>resources</Filter>
+    </Image>
+    <Image Include="procrast.ico">
+      <Filter>resources</Filter>
+    </Image>
+    <Image Include="procrastitracker.ico">
+      <Filter>resources</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="procrastitracker.rc">
+      <Filter>resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\PT\README.html">
+      <Filter>resources</Filter>
+    </None>
+    <None Include="rt_manif.bin">
+      <Filter>resources</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\src\TODO.txt">
+      <Filter>resources</Filter>
+    </Text>
+  </ItemGroup>
+</Project>
