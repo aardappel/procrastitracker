@@ -50,7 +50,8 @@ extern void CheckAway(DWORD lasttime, DWORD curtime);
 
 LRESULT CALLBACK KeyboardTracker(int code, WPARAM wParam, LPARAM lParam)
 {
-    if (code == HC_ACTION) {
+    if (code == HC_ACTION)
+    {
         DWORD curtime = GetTickCount();
         CheckAway(g_dwLastTick, curtime);
 
@@ -63,7 +64,8 @@ LRESULT CALLBACK KeyboardTracker(int code, WPARAM wParam, LPARAM lParam)
 
 LRESULT CALLBACK MouseTracker(int code, WPARAM wParam, LPARAM lParam)
 {
-    if (code == HC_ACTION) {
+    if (code == HC_ACTION)
+    {
         DWORD curtime = GetTickCount();
         CheckAway(g_dwLastTick, curtime);
 
@@ -74,7 +76,8 @@ LRESULT CALLBACK MouseTracker(int code, WPARAM wParam, LPARAM lParam)
             case WM_RBUTTONDOWN: rmb++; break;
             case WM_MOUSEWHEEL: scr += abs(*(((short *)&pStruct->mouseData) + 1)); break;
         }
-        if (pStruct->pt.x != g_mouseLocX || pStruct->pt.y != g_mouseLocY) {
+        if (pStruct->pt.x != g_mouseLocX || pStruct->pt.y != g_mouseLocY)
+        {
             g_mouseLocX = pStruct->pt.x;
             g_mouseLocY = pStruct->pt.y;
             g_dwLastTick = curtime;
@@ -107,7 +110,8 @@ void reinstall_hooks()
     DWORD lasttick = g_dwLastTick;
 
     inputhookcleanup();
-    if (!inputhooksetup()) {
+    if (!inputhooksetup())
+    {
         panic("PT: can't set keyboard/mouse hooks, please restart ProcrastiTracker");
     }
 
@@ -121,8 +125,10 @@ DWORD WINAPI hookproc(LPVOID)
     inputhooksetup();
 
     MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0)) {
-        if (msg.hwnd) {
+    while (GetMessage(&msg, NULL, 0, 0))
+    {
+        if (msg.hwnd)
+        {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
@@ -194,7 +200,8 @@ bool processrawinput(LPARAM lParam)
 
     char szTempOutput[1024];
 
-    if (raw->header.dwType == RIM_TYPEKEYBOARD) {
+    if (raw->header.dwType == RIM_TYPEKEYBOARD)
+    {
         sprintf(szTempOutput, " Kbd: make=%04x Flags:%04x Reserved:%04x ExtraInformation:%08x, msg=%04x VK=%04x\n",
                 raw->data.keyboard.MakeCode, raw->data.keyboard.Flags, raw->data.keyboard.Reserved,
                 raw->data.keyboard.ExtraInformation, raw->data.keyboard.Message, raw->data.keyboard.VKey);

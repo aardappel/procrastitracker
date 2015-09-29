@@ -36,7 +36,8 @@ struct daydata
 
     void hit(DWORD idletime, DWORD awaysecs)
     {
-        if (awaysecs) {
+        if (awaysecs)
+        {
             seconds += awaysecs;
         }
         else
@@ -95,7 +96,8 @@ struct daydata
     {
         // FF: struct DAY {
 
-        if (version < 5) {
+        if (version < 5) 
+        {
             SYSTEMTIME st;
             gzread_s(f, &st, sizeof(SYSTEMTIME));
             nday = dayordering(st);

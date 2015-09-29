@@ -174,7 +174,8 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         case WM_INITDIALOG: return (INT_PTR)TRUE;
 
         case WM_COMMAND:
-            if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) {
+            if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
+            {
                 EndDialog(hDlg, LOWORD(wParam));
                 return (INT_PTR)TRUE;
             }
@@ -287,7 +288,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case WM_DESTROY: PostQuitMessage(0); break;
 
         case WM_USER + 1:  // tray icon
-            if (lParam == WM_LBUTTONDBLCLK || lParam == WM_RBUTTONUP) {
+            if (lParam == WM_LBUTTONDBLCLK || lParam == WM_RBUTTONUP)
+            {
                 HMENU myMenu = CreatePopupMenu();
                 if (!myMenu) break;
 
@@ -324,7 +326,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             break;
 
         case WM_SYSCOMMAND:
-            if ((wParam & 0xFFF0) == SC_MINIMIZE) {
+            if ((wParam & 0xFFF0) == SC_MINIMIZE)
+            {
                 ShowWindow(hWnd, SW_HIDE);
                 return 0;
             }
@@ -395,7 +398,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     ShowWindow(mainhwnd, SW_HIDE /*nCmdShow*/);
     UpdateWindow(mainhwnd);
 
-    if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, databaseroot))) {
+    if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, databaseroot)))
+    {
         PathAppend(databaseroot, "\\");
     }
     else
@@ -437,7 +441,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     launchhookthread();
 
     MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0)) {
+    while (GetMessage(&msg, NULL, 0, 0))
+    {
         // if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
         {
             TranslateMessage(&msg);

@@ -2,7 +2,8 @@
 void setbar(int tag, HDC hdc)
 {
     HBITMAP &bm = tags[tag].barbm;
-    if (!bm) {
+    if (!bm)
+    {
         if (!bitmapdc) bitmapdc = CreateCompatibleDC(hdc);
         bm = CreateCompatibleBitmap(hdc, 1920, 64);
         HBITMAP old = (HBITMAP)SelectObject(bitmapdc, bm);
@@ -29,7 +30,8 @@ void renderdaystat(HDC hdc, HWND hDlg)
     loopv(i, daystats)
     {
         DWORD sec = daystats[i].total;
-        if (sec) {
+        if (sec)
+        {
             numdays++;
             if (sec > biggesttotal) biggesttotal = sec;
         }
@@ -53,7 +55,8 @@ void renderdaystat(HDC hdc, HWND hDlg)
 
     // GetWindowRect(daystatctrl, &r);
     int barh = (r.bottom - r.top) / numdays;
-    if (!barh) {
+    if (!barh)
+    {
         barh = 1;
         numdays = r.bottom - r.top;
     }
@@ -73,7 +76,8 @@ void renderdaystat(HDC hdc, HWND hDlg)
         loop(j, MAXTAGS)
         {
             int sz = daystats[day].seconds[j] * barw / biggesttotal;
-            if (sz) {
+            if (sz)
+            {
                 rt.left = bstart;
                 rt.right = (bstart += sz);
                 if (!tags[j].br) tags[j].br = CreateSolidBrush(tags[j].color);
@@ -115,7 +119,8 @@ void rendertree(HWND hDlg, bool graphalso)
     loopv(i, daystats) daystats[i].sum();
     // renderdaystat(GetDC(daystatctrl));
 
-    if (graphalso) {
+    if (graphalso)
+    {
         RECT r;
         GetClientRect(hDlg, &r);
         r.left = r.right - daygraphwidth;
@@ -144,8 +149,10 @@ long handleCustomDraw(HWND hWndTreeView, LPNMTVCUSTOMDRAW pNMTVCD)
             tvi.stateMask = -1;
 
             TreeView_GetItem(hWndTreeView, &tvi);
-            if (tvi.lParam) {
-                if (tvi.state & TVIS_EXPANDED && TreeView_GetChild(hWndTreeView, hItem)) {
+            if (tvi.lParam)
+            {
+                if (tvi.state & TVIS_EXPANDED && TreeView_GetChild(hWndTreeView, hItem))
+                {
                     rc.left = rc.right;
                     rc.right = bargraphwidth;
                     FillRect(pNMTVCD->nmcd.hdc, &rc, whitebrush);
@@ -185,7 +192,8 @@ long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR)
     {
         case NM_CUSTOMDRAW:
         {
-            if (nIDCtrl == IDC_TREE1) {
+            if (nIDCtrl == IDC_TREE1)
+            {
                 LPNMTVCUSTOMDRAW pNMTVCD = (LPNMTVCUSTOMDRAW)pNMHDR;
                 HWND hWndTreeView = pNMHDR->hwndFrom;
 
@@ -213,7 +221,8 @@ long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR)
                 {
                     case 'C':
                     {
-                        if (selectednode->last) {
+                        if (selectednode->last)
+                        {
                             char buf[100] = "";
                             CWin32InputBox::InputBox("Manual Override",
                                                      "Enter new amount of minutes to add to this node", buf, 100, false,
@@ -241,10 +250,12 @@ long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR)
                         return TRUE;
 
                     case 'M':
-                        if (prevselectednode) {
+                        if (prevselectednode)
+                        {
                             prevselectednode = prevselectednode->firstinchain();
                             selectednode = selectednode->firstinchain();
-                            if (prevselectednode != selectednode && prevselectednode->parent) {
+                            if (prevselectednode != selectednode && prevselectednode->parent)
+                            {
                                 selectednode->merge(*prevselectednode);
                                 prevselectednode->parent->remove(prevselectednode);
                                 selectednode = prevselectednode = NULL;
@@ -289,7 +300,8 @@ long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR)
             tvi.mask = TVIF_HANDLE | TVIF_PARAM;
             tvi.hItem = it->hItem;
             TreeView_GetItem(treeview, &tvi);
-            if (tvi.lParam) {
+            if (tvi.lParam)
+            {
                 node *n = (node *)tvi.lParam;
                 String s;
                 n->formatstats(s);
@@ -393,7 +405,8 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             // tagdrop = GetDlgItem(hDlg, IDC_COMBOBOXEX1);
             taglist = GetDlgItem(hDlg, IDC_LIST1);
 
-            if (!tagimages) {
+            if (!tagimages)
+            {
                 tagimages = ImageList_Create(bmsize, bmsize, ILC_COLORDDB, MAXTAGS, 0);
                 HDC hdc = GetDC(NULL);
                 HDC bitmapdc = CreateCompatibleDC(hdc);
@@ -459,8 +472,10 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             if (wy < min_y) uy = min_y;
             if (wx < min_x) ux = min_x;
 
-            if (uy != -1) {
-                if (wParam == WMSZ_TOP || wParam == WMSZ_TOPLEFT || wParam == WMSZ_TOPRIGHT) {
+            if (uy != -1)
+            {
+                if (wParam == WMSZ_TOP || wParam == WMSZ_TOPLEFT || wParam == WMSZ_TOPRIGHT)
+                {
                     r->top = r->bottom - uy;
                 }
                 else
@@ -468,8 +483,10 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
                     r->bottom = r->top + uy;
                 }
             }
-            if (ux != -1) {
-                if (wParam == WMSZ_LEFT || wParam == WMSZ_TOPLEFT || wParam == WMSZ_BOTTOMLEFT) {
+            if (ux != -1)
+            {
+                if (wParam == WMSZ_LEFT || wParam == WMSZ_TOPLEFT || wParam == WMSZ_BOTTOMLEFT)
+                {
                     r->left = r->right - ux;
                 }
                 else
@@ -510,7 +527,8 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             int x = GET_X_LPARAM(lParam);
             int y = GET_Y_LPARAM(lParam);
             HWND sho = GetDlgItem(hDlg, IDC_STATICHO);
-            if (x < graphrect.left || x >= graphrect.right || y < graphrect.top || y >= graphrect.bottom) {
+            if (x < graphrect.left || x >= graphrect.right || y < graphrect.top || y >= graphrect.bottom)
+            {
                 if (isongraph) SetWindowTextA(sho, "Hover over graph...");
                 isongraph = false;
                 /*
@@ -552,9 +570,11 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
                 loopv(i, daystats)
                 {
                     DWORD sec = daystats[i].total;
-                    if (sec) {
+                    if (sec)
+                    {
                         int ih = y - graphrect.top - ypos * graphh;
-                        if (ih >= 0 && ih < graphh) {
+                        if (ih >= 0 && ih < graphh)
+                        {
                             daydata d;
                             d.nday = i + starttime;
                             SYSTEMTIME st;
@@ -629,9 +649,11 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
                 */
                 case IDC_COMBO1:
                 {
-                    if (HIWORD(wParam) == CBN_SELENDOK) {
+                    if (HIWORD(wParam) == CBN_SELENDOK)
+                    {
                         int sel = SendMessage(quickcombo, CB_GETCURSEL, 0, 0);
-                        if (sel != CB_ERR) {
+                        if (sel != CB_ERR)
+                        {
                             endtime = now();
 
                             SYSTEMTIME st;
@@ -677,7 +699,8 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
                     String old(filterstrcontents);
                     getcontroltext(filterstr, filterstrcontents, 100);
                     String cur(filterstrcontents);
-                    if (!(old == cur)) {
+                    if (!(old == cur))
+                    {
                         rendertree(hDlg, true);
                         return (INT_PTR)TRUE;
                     }
@@ -686,7 +709,8 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
                 case IDC_BUTTON2:
                 {
                     int sel = SendMessage(taglist, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
-                    if (sel >= 0 && selectednode && sel != selectednode->tag) {
+                    if (sel >= 0 && selectednode && sel != selectednode->tag)
+                    {
                         selectednode->tag = sel;
                         rendertree(hDlg, true);
                         return (INT_PTR)TRUE;
@@ -753,7 +777,8 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         case WM_HSCROLL:
         {
             int fl = SendMessageA(foldslider, TBM_GETPOS, 0, 0);
-            if (fl != foldlevel) {
+            if (fl != foldlevel)
+            {
                 foldlevel = fl;
                 rendertree(hDlg, false);
             }

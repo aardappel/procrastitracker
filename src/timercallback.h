@@ -16,7 +16,8 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
     }
 
     DWORD idletime = (dwTime - inputhookinactivity()) / 1000;  // same here
-    if (idletime > prefs[PREF_IDLE].ival) {
+    if (idletime > prefs[PREF_IDLE].ival)
+    {
         if (!changesmade)
             lastsavetime = dwTime;  // save one last time while idle, don't keep saving db while idle, and don't
                                     // immediately save on resume
@@ -40,12 +41,14 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
     *url = 0;
 
     HWND h = GetForegroundWindow();
-    if (h) {
+    if (h)
+    {
         DWORD procid = 0;
         GetWindowThreadProcessId(h, &procid);
 
         HANDLE ph = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ /*|PROCESS_SET_QUOTA*/, FALSE, procid);
-        if (ph) {
+        if (ph)
+        {
             // SIZE_T min = 0, max = 0;
             // GetProcessWorkingSetSize(ph, &min, &max);
             // SetProcessWorkingSetSize(ph, min, 1000000000);
@@ -81,7 +84,8 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
             ddereq(exename, "WWW_GetWindowInfo", "0xFFFFFFFF", url, MAXSTR);
             url[MAXSTR - 1] = 0;
             char *http = strstr(url, "://");
-            if (http) {
+            if (http)
+            {
                 http += 3;
                 if (strncmp(http, "www.", 4) == 0) http += 4;
                 size_t len = strcspn(http, "/\":@");

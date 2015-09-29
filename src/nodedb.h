@@ -26,13 +26,15 @@ void save(bool filtered = false, char *givenfilename = NULL)
 
     gzclose(f);
 
-    if (!givenfilename) {
+    if (!givenfilename)
+    {
         lastsavetime = GetTickCount();
 
         if (GetFileAttributesA(databasemain) !=
             INVALID_FILE_ATTRIBUTES)  // only delete previous backups if we have a database
         {
-            if (firstsave) {
+            if (firstsave)
+            {
                 SYSTEMTIME st;
                 GetLocalTime(&st);
                 char lrun[MAX_PATH];
@@ -64,7 +66,8 @@ void load(node *root, char *fn, bool merge)
     // FF: int magic (== 'PTFF' on x86)
     if (version >= 6 && rint(f) != 'PTFF') panic("PT: not a PT database file");
 
-    if (version >= 4) {
+    if (version >= 4)
+    {
         if (merge)  // don't overwrite global data
         {
             int ntags = rint(f);
@@ -92,7 +95,8 @@ void load(node *root, char *fn, bool merge)
             }
 
             // FF: int minfilter
-            if (version < 6) {
+            if (version < 6)
+            {
                 loop(i, 10) gzgetc_s(f);
             }
             else
@@ -102,7 +106,8 @@ void load(node *root, char *fn, bool merge)
             foldlevel = rint(f);
 
             ASSERT(NUM_PREFS == 6);
-            if (version >= 6) {
+            if (version >= 6)
+            {
                 // FF: int prefs[6] (see advanced prefs window)
                 loop(i, 5) prefs[i].ival = rint(f);
                 if (version >= 10) prefs[5].ival = rint(f);
@@ -123,7 +128,8 @@ void load(node *root, char *fn, bool merge)
 void exporthtml(char *fn)
 {
     FILE *f = fopen(fn, "w");
-    if (f) {
+    if (f)
+    {
         fprintf(f, "<HTML><HEAD><TITLE>Procrastitracker export</TITLE></HEAD><BODY>");
         root->print(f, true);
         fprintf(f, "</BODY></HTML>");
@@ -144,18 +150,22 @@ static char *seperators[] = {" - ", " | ", " : ", " > ", "\\\\", "\\", "//", "/"
 void addtodatabase(char *elements, SYSTEMTIME &st, DWORD idletime, DWORD awaysecs)
 {
     node *n = root;
-    for (char *rest = elements, *head; *rest;) {
+    for (char *rest = elements, *head; *rest;)
+    {
         head = rest;
         char *sep = NULL;
         int sepl = 0;
-        for (char **seps = seperators; *seps; seps++) {
+        for (char **seps = seperators; *seps; seps++)
+        {
             char *sepn = strstr(rest, *seps);
-            if (sepn && (!sep || sepn < sep)) {
+            if (sepn && (!sep || sepn < sep))
+            {
                 sep = sepn;
                 sepl = strlen(*seps);
             }
         }
-        if (sep) {
+        if (sep)
+        {
             rest = sep + sepl;
             *sep = 0;
         }
@@ -163,9 +173,11 @@ void addtodatabase(char *elements, SYSTEMTIME &st, DWORD idletime, DWORD awaysec
         {
             rest = "";
         }
-        if (*head) {
+        if (*head)
+        {
             if (head[0] == '[') head++;
-            for (;;) {
+            for (;;)
+            {
                 size_t l = strlen(head);
                 if (l && (head[l - 1] == '*' || head[l - 1] == ']'))
                     head[l - 1] = 0;

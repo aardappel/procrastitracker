@@ -111,14 +111,16 @@ WIN32INPUTBOX_PARAM *CWin32InputBox::GetParam() { return _param; }
 INT_PTR CWin32InputBox::InputBoxEx(WIN32INPUTBOX_PARAM *param)
 {
     // Check mandatory parameters
-    if (param->szResult == 0) {
+    if (param->szResult == 0)
+    {
         ::SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
     }
 
     LPDLGTEMPLATE dlgTemplate;
 
-    if (param->DlgTemplateName != 0) {
+    if (param->DlgTemplateName != 0)
+    {
         HMODULE hModule = (HMODULE)param->hInstance;
         HRSRC rcDlg = ::FindResource(hModule, MAKEINTRESOURCE(param->DlgTemplateName), RT_DIALOG);
         if (rcDlg == NULL) return 0;
@@ -136,7 +138,8 @@ INT_PTR CWin32InputBox::InputBoxEx(WIN32INPUTBOX_PARAM *param)
     MSDN_DLGTEMPLATEEX *dlgTemplateEx =
         IsDlgTemplateExtended((LPDLGTEMPLATE)dlgTemplate) ? (MSDN_DLGTEMPLATEEX *)dlgTemplate : 0;
 
-    if (dlgTemplateEx != 0) {
+    if (dlgTemplateEx != 0)
+    {
         dlgTemplateEx->exStyle |= param->dwExStylesPlus;
         dlgTemplateEx->style |= param->dwStylesPlus;
         dlgTemplateEx->exStyle &= param->dwExStylesMinus;
@@ -210,7 +213,8 @@ void CWin32InputBox::InitDialog()
     ::GetWindowRect(hwndEdit1, &rectEdit1);
     ::GetWindowRect(hwndEdit2, &rectEdit2);
 
-    if (_param->bMultiline) {
+    if (_param->bMultiline)
+    {
         ::ShowWindow(hwndEdit1, SW_HIDE);
         ::SetWindowPos(hwndEdit2, HWND_NOTOPMOST, rectEdit1.left - rectDlg.left,
                        (rectEdit1.top - rectDlg.top) - (rectEdit1.bottom - rectEdit1.top), 0, 0,
@@ -254,8 +258,10 @@ LRESULT CALLBACK CWin32InputBox::DlgProc(HWND hDlg, UINT message, WPARAM wParam,
             OutputDebugString(buf);
             #endif
             INT_PTR buttonId = LOWORD(wParam);
-            for (size_t i = 0; i < sizeof(definputbox_buttonids) / sizeof(definputbox_buttonids[0]); i++) {
-                if (buttonId == definputbox_buttonids[i]) {
+            for (size_t i = 0; i < sizeof(definputbox_buttonids) / sizeof(definputbox_buttonids[0]); i++)
+            {
+                if (buttonId == definputbox_buttonids[i])
+                {
                     ::GetWindowText(_this->_hwndEditCtrl, _this->_param->szResult, _this->_param->nResultSize);
 
                     ::EndDialog(hDlg, buttonId);

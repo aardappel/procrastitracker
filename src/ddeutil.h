@@ -27,7 +27,8 @@ void ddereq(char *server, char *topic, char *item, char *buf, int len)
 
     HSZ hszItem = DdeCreateStringHandleA(idInst, item, 0);
     HDDEDATA hData = DdeClientTransaction(NULL, 0, hConv, hszItem, CF_TEXT, XTYP_REQUEST, 5000, NULL);
-    if (hData != NULL) {
+    if (hData != NULL)
+    {
         DdeGetData(hData, (unsigned char *)buf, len, 0);
         DdeFreeDataHandle(hData);
     }

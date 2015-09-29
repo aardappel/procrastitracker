@@ -18,9 +18,11 @@ INT_PTR CALLBACK Away(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         case WM_DESTROY: awaydialog = NULL; break;
 
         case WM_COMMAND:
-            if (LOWORD(wParam) != IDC_BUTTON8) {
+            if (LOWORD(wParam) != IDC_BUTTON8)
+            {
                 HWND button = GetDlgItem(hDlg, LOWORD(wParam));
-                if (button) {
+                if (button)
+                {
                     char buf[200] = "Away : ";
                     getcontroltext(button, buf + strlen(buf), 100);
                     SYSTEMTIME st;
@@ -41,7 +43,8 @@ void CreateAwayDialog(DWORD awaysecs)
     if (awaydialog) EndDialog(awaydialog, IDC_BUTTON8);  // if the user hadn't responded to the previous dialog, kill it
     awaysecsdialog = awaysecs;
     awaydialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_AWAYDIALOG), mainhwnd, Away);
-    if (!awaydialog) {
+    if (!awaydialog)
+    {
         DWORD err = GetLastError();
         printf("CreateDialog failed: %d\n", err);
     }
