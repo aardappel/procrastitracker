@@ -189,8 +189,26 @@ struct node : SlabAllocated<node>
         gzwrite(f, nname, (int)strlen(nname) + 1);
         wint(f, tag);
         gzputc(f, hidden);
-        wint(f, numdays());
-        for (lday *d = last; d; d = d->next) d->save(f);
+
+        if (filtered)
+        {
+            Vector<lday *> infilter;
+            if (node_is_in_filter()) {
+                for (lday *d = last; d; d = d->next) {
+                    if (day_is_in_filter(d->nday)) {
+                        infilter.push(d);
+                    }
+                }
+            }
+            wint(f, infilter.size());
+            for (int i = 0; i < infilter.size(); i++) infilter[i]->save(f);
+            infilter.setsize_nd(0);
+        }
+        else
+        {
+            wint(f, numdays());
+            for (lday *d = last; d; d = d->next) d->save(f);
+        }
 
         if (onechild && (!filtered || onechild->accum.seconds)) {
             wint(f, 1);
@@ -313,14 +331,17 @@ struct node : SlabAllocated<node>
         *dp = o;
     }
 
+    bool node_is_in_filter() { return last && (filterontag < 0 || filterontag == gettag()) && instrfilter; }
+    bool day_is_in_filter(int o) { return o >= starttime && o <= endtime; }
+
     void accumulate(daydata &pd, tagstat &pts)
     {
         accum = daydata();
         tagstat tts;
-        if (last && (filterontag < 0 || filterontag == gettag()) && instrfilter) {
+        if (node_is_in_filter()) {
             for (lday *d = last; d; d = d->next) {
                 int o = d->nday;
-                if (o >= starttime && o <= endtime) {
+                if (day_is_in_filter(o)) {
                     accum.accumulate(*d);
                     daystats[o - starttime].seconds[gettag()] += d->seconds;
                 }
