@@ -58,8 +58,36 @@ tag tags[MAXTAGS] = {
 
 const int FILE_FORMAT_VERSION = 10;
 
+extern char databasemain[];
+extern char databaseback[];
+
 void PANIC()
 {
+    //Try to restore the latest backup
+    WIN32_FILE_ATTRIBUTE_DATA attr;
+
+    if (GetFileAttributesExA(databaseback, GetFileExInfoStandard, &attr) && !(attr.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+    {
+        SYSTEMTIME stUTC, stLocal;
+        FileTimeToSystemTime(&attr.ftLastWriteTime, &stUTC);
+        SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal);
+        char msg[256];
+        sprintf_s(msg, 256, "The database is corrupt. Last available backup: %04d-%02d-%02d %02d:%02d\n"
+                            "Do you want to restore it?", stLocal.wYear, stLocal.wMonth, stLocal.wDay, stLocal.wHour, stLocal.wMinute);
+
+        if (MessageBoxA(NULL, msg, "DB problem", MB_YESNO) == IDYES)
+        {
+            DeleteFile(databasemain);
+            if (CopyFileA(databaseback, databasemain, TRUE))
+            {
+                MessageBoxA(NULL, "Backup restored. Please restart the program.", "Backup restored", MB_OK);
+                ExitProcess(0);
+            }
+        }
+    }
+
+    
+
     MessageBoxA(NULL,
                 "The database is corrupt. Please restore the last backup (ProcrastiTracker makes these frequently), "
                 "and try again. See Procrastitracker start menu for database location. Exiting program..",
@@ -69,7 +97,11 @@ void PANIC()
 
 void gzread_s(gzFile f, void *buf, uint size)
 {
-    if (gzread(f, buf, size) < (int)size) PANIC();
+    if (gzread(f, buf, size) < (int)size)
+    {
+        gzclose(f);
+        PANIC();
+    }
 }
 int gzgetc_s(gzFile f)
 {
@@ -362,7 +394,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                                     ICC_TREEVIEW_CLASSES | ICC_USEREX_CLASSES | ICC_WIN95_CLASSES};
     InitCommonControlsEx(&icc);
 
-    if (FindWindowA("PROCRASTITRACKER", NULL)) panic("ProcrastiTracker already running");
+    if (FindWindowA("PROCRASTITRACKER", NULL))  panic("ProcrastiTracker already running");
 
     if (!ddeinit()) panic("PT: Cannot initialize DDE");
 
