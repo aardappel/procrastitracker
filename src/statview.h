@@ -217,7 +217,8 @@ long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR)
         case TVN_KEYDOWN:
         {
             NMTVKEYDOWN *kd = (NMTVKEYDOWN *)pNMHDR;
-            if (selectednode) switch (kd->wVKey)
+            short ctrl = GetKeyState(VK_CONTROL);
+            if (selectednode && (ctrl & 0x8000)) switch (kd->wVKey)
                 {
                     case 'C':
                     {
@@ -235,8 +236,11 @@ long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR)
                     }
 
                     case 'H':
-                        selectednode->hidden = true;
-                        rendertree(hWndDlg, false);
+                        if (selectednode != root)
+                        {
+                            selectednode->hidden = true;
+                            rendertree(hWndDlg, false);
+                        }
                         return TRUE;
 
                     case 'U':
@@ -245,21 +249,27 @@ long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR)
                         return TRUE;
 
                     case 'P':
-                        selectednode->firstinchain()->mergallsubstring();
-                        rendertree(hWndDlg, false);
+                        if (selectednode != root)
+                        {
+                            selectednode->firstinchain()->mergallsubstring();
+                            rendertree(hWndDlg, false);
+                        }
                         return TRUE;
 
                     case 'M':
-                        if (prevselectednode)
+                        if (selectednode != root)
                         {
-                            prevselectednode = prevselectednode->firstinchain();
-                            selectednode = selectednode->firstinchain();
-                            if (prevselectednode != selectednode && prevselectednode->parent)
+                            if (prevselectednode)
                             {
-                                selectednode->merge(*prevselectednode);
-                                prevselectednode->parent->remove(prevselectednode);
-                                selectednode = prevselectednode = NULL;
-                                rendertree(hWndDlg, false);
+                                prevselectednode = prevselectednode->firstinchain();
+                                selectednode = selectednode->firstinchain();
+                                if (prevselectednode != selectednode && prevselectednode->parent)
+                                {
+                                    selectednode->merge(*prevselectednode);
+                                    prevselectednode->parent->remove(prevselectednode);
+                                    selectednode = prevselectednode = NULL;
+                                    rendertree(hWndDlg, false);
+                                }
                             }
                         }
                         return TRUE;
