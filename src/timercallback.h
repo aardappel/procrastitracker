@@ -105,16 +105,11 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
         title[MAXSTR - 1] = 0;
     }
 
-    std::string s = exename[0] ? exename : "(null)";
-    if (url[0]) s += " - ";
+    std::string s = exename;
+    if (url[0] && s[0]) s += " - ";
     s + url;
-    if (title[0]) s += " - ";
+    if (title[0] && s[0]) s += " - ";
     s += title;
 
-    // char buf[MAXSTR];
-    // sprintf_s(buf, MAXSTR, "%s%s%s%s%s", exename[0] ? exename : "(null)", url[0] ? " - " : "", url, title[0] ? " - "
-    // : "", title);
-    // buf[MAXSTR-1] = 0;
-
-    addtodatabase((char *)s.c_str(), st, idletime, 0);
+    if (s[0]) addtodatabase((char *)s.c_str(), st, idletime, 0);
 };
