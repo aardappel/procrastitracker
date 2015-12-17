@@ -71,7 +71,7 @@ void load(node *root, char *fn, bool merge)
         if (merge)  // don't overwrite global data
         {
             int ntags = rint(f);
-            uint bytes = ntags * (sizeof(tag::name) + sizeof(int));  // tags
+            uint bytes = ntags * (sizeof(tag().name) + sizeof(int)); // tags
             bytes += version < 6 ? 10 : sizeof(int);                 // minfilter
             bytes += sizeof(int);                                    // foldlevel
             if (version >= 6)                                        // prefs
