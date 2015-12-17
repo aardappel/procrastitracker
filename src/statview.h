@@ -468,6 +468,7 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             // SetFocus(GetDlgItem(hDlg, IDC_BUTTON8));
             // SendMessage(hDlg, DM_SETDEFID, (WPARAM)IDC_BUTTON8, 0);
             // SendMessage(hDlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(hDlg, IDC_BUTTON8), TRUE);
+            SendMessageA(hDlg, WM_SETICON, 0, (LPARAM)LoadIcon(hInst, MAKEINTRESOURCE(IDI_PROCRASTITRACKER)));
 
             return (INT_PTR)TRUE;
         }

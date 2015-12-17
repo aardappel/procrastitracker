@@ -204,6 +204,7 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
         case WM_INITDIALOG:
+            SendMessageA(hDlg, WM_SETICON, 0, (LPARAM)LoadIcon(hInst, MAKEINTRESOURCE(IDI_PROCRASTITRACKER)));
             SetWindowTextA(GetDlgItem(hDlg, IDC_STATIC1), "ProcrastiTracker Version " __DATE__);
             return (INT_PTR)TRUE;
 
