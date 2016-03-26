@@ -42,6 +42,7 @@
 #include <windowsx.h>
 #include <shlobj.h>
 #include <shlwapi.h>
+#include <oleacc.h>
 
 // C RunTime Header Files
 #include <stdlib.h>
@@ -56,6 +57,8 @@
 #include <string>
 
 #include "zlib.h"
+
+const int MAXTMPSTR = 1000;
 
 // TODO: reference additional headers your program requires here
  

@@ -400,6 +400,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     if (FindWindowA("PROCRASTITRACKER", NULL))  panic("ProcrastiTracker already running");
 
     if (!ddeinit()) panic("PT: Cannot initialize DDE");
+    // This is for chrome only:
+    eventhookinit();
 
     WNDCLASSEX wcex;
     wcex.cbSize = sizeof(WNDCLASSEX);
@@ -493,6 +495,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     CreateTaskBarIcon(mainhwnd, NIM_DELETE);
 
     ddeclean();
+    eventhookclean();
 
     #ifdef _DEBUG
     delete root;

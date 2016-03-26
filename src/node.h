@@ -330,7 +330,7 @@ struct node : SlabAllocated<node>
                     {
                         if (dc->nday == pd->nday)
                         {
-                            pd->accumulate(*dc);
+                            pd->accumulate(*dc, false);
                             DELETEP(dc);
                             goto found;
                         }
@@ -371,7 +371,7 @@ struct node : SlabAllocated<node>
                 int o = d->nday;
                 if (day_is_in_filter(o))
                 {
-                    accum.accumulate(*d);
+                    accum.accumulate(*d, !ht);
                     daystats[o - starttime].seconds[gettag()] += d->seconds;
                 }
             }
@@ -387,7 +387,7 @@ struct node : SlabAllocated<node>
         if (tts.deviates(accum.seconds) && !ts) ts = new tagstat;
         if (ts) *ts = tts;
         pts.add(tts);
-        pd.accumulate(accum);
+        pd.accumulate(accum, parent && !parent->ht);
     }
 
     void treeview(int depth, HWND hWnd, HTREEITEM parent, HTREEITEM after, int timelevel = 0, char *concat = "")
@@ -407,10 +407,9 @@ struct node : SlabAllocated<node>
         s.Cat(" - ");
         s.Cat(full);
 
-        const int MAXSTR = 1000;
-        static wchar_t us[MAXSTR];
-        MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, us, MAXSTR);
-        us[MAXSTR - 1] = 0;
+        static wchar_t us[MAXTMPSTR];
+        MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, us, MAXTMPSTR);
+        us[MAXTMPSTR - 1] = 0;
 
         TV_INSERTSTRUCTW tvinsert;
         tvinsert.hParent = parent;
@@ -453,7 +452,7 @@ struct node : SlabAllocated<node>
             {
                 if (d->nday == od->nday)
                 {
-                    d->accumulate(*od);
+                    d->accumulate(*od, false);
                     goto daydone;
                 }
             }

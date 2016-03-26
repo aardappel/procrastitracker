@@ -29,15 +29,13 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
 
     changesmade = true;
 
-    const int MAXSTR = 1000;
-
-    char exename[MAXSTR];
+    char exename[MAXTMPSTR];
     *exename = 0;
 
-    char title[MAXSTR];
+    char title[MAXTMPSTR];
     *title = 0;
 
-    char url[MAXSTR];
+    char url[MAXTMPSTR];
     *url = 0;
 
     HWND h = GetForegroundWindow();
@@ -57,18 +55,18 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
             HMODULE hm;
             if (qfpin)  // we're on vista, only this function allows a 32bit process to query a 64bit one
             {
-                wchar_t uexename[MAXSTR];
+                wchar_t uexename[MAXTMPSTR];
                 DWORD testl = sizeof(uexename);
                 qfpin(ph, 0, uexename, &testl);
-                uexename[MAXSTR - 1] = 0;
-                WideCharToMultiByte(CP_UTF8, 0, uexename, -1, exename, MAXSTR, NULL, NULL);
-                exename[MAXSTR - 1] = 0;
+                uexename[MAXTMPSTR - 1] = 0;
+                WideCharToMultiByte(CP_UTF8, 0, uexename, -1, exename, MAXTMPSTR, NULL, NULL);
+                exename[MAXTMPSTR - 1] = 0;
             }
             else  // we're on XP or 2000
             {
-                if (EnumProcessModules(ph, &hm, sizeof(HMODULE), &count)) GetModuleFileNameExA(ph, hm, exename, MAXSTR);
+                if (EnumProcessModules(ph, &hm, sizeof(HMODULE), &count)) GetModuleFileNameExA(ph, hm, exename, MAXTMPSTR);
             }
-            exename[MAXSTR - 1] = 0;
+            exename[MAXTMPSTR - 1] = 0;
             char *trim = strrchr(exename, '\\');
             if (trim) memmove(exename, trim + 1, strlen(trim));
             char *ext = strrchr(exename, '.');
@@ -81,33 +79,40 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
             strcmp(exename, "opera") == 0 || strcmp(exename, "netscape") == 0 || strcmp(exename, "netscape6") == 0)
         {
             // TODO: can we get a UTF-8 URL out of this somehow, if the URL contains percent encoded unicode chars?
-            ddereq(exename, "WWW_GetWindowInfo", "0xFFFFFFFF", url, MAXSTR);
-            url[MAXSTR - 1] = 0;
-            char *http = strstr(url, "://");
-            if (http)
+            ddereq(exename, "WWW_GetWindowInfo", "0xFFFFFFFF", url, MAXTMPSTR);
+
+            if (!*url && !strcmp(exename, "chrome"))
             {
-                http += 3;
-                if (strncmp(http, "www.", 4) == 0) http += 4;
-                size_t len = strcspn(http, "/\":@");
-                http[len] = 0;
-                memmove(url, http, len + 1);
+                // Chrome doesn't support DDE, get last url change from it:
+                strncpy(url, current_chrome_url, MAXTMPSTR);
+            }
+
+            char *http = strstr(url, "://");
+            if (!http)
+            {
+                http = url;
             }
             else
             {
-                *url = 0;
+                http += 3;
             }
+            if (strncmp(http, "www.", 4) == 0) http += 4;
+            size_t len = strcspn(http, "/\":@\0");
+            http[len] = 0;
+            memmove(url, http, len + 1);
+            //OutputDebugF("url - %s\n", url);
         }
 
-        wchar_t utitle[MAXSTR];
-        GetWindowTextW(h, utitle, MAXSTR);
-        utitle[MAXSTR - 1] = 0;
-        WideCharToMultiByte(CP_UTF8, 0, utitle, -1, title, MAXSTR, NULL, NULL);
-        title[MAXSTR - 1] = 0;
+        wchar_t utitle[MAXTMPSTR];
+        GetWindowTextW(h, utitle, MAXTMPSTR);
+        utitle[MAXTMPSTR - 1] = 0;
+        WideCharToMultiByte(CP_UTF8, 0, utitle, -1, title, MAXTMPSTR, NULL, NULL);
+        title[MAXTMPSTR - 1] = 0;
     }
 
     std::string s = exename;
     if (url[0] && s[0]) s += " - ";
-    s + url;
+    s += url;
     if (title[0] && s[0]) s += " - ";
     s += title;
 

@@ -48,7 +48,7 @@ struct daydata
         }
     }
 
-    void accumulate(daydata &o)
+    void accumulate(daydata &o, bool copylastdayminute)
     {
         seconds += o.seconds;
         semiidleseconds += o.semiidleseconds;
@@ -56,6 +56,11 @@ struct daydata
         lmb += o.lmb;
         rmb += o.rmb;
         scr += o.scr;
+        if (copylastdayminute && o.nday && !nday)
+        {
+            nday = o.nday;
+            nminute = o.nminute;
+        }
     }
 
     void format(String &s, int timelevel)
@@ -78,6 +83,12 @@ struct daydata
         if (lmb) s.FormatCat(", %d lmb", lmb);
         if (rmb) s.FormatCat(", %d rmb", rmb);
         if (scr) s.FormatCat(", %d scrollwheel", scr);
+        if (nminute && nday)
+        {
+            SYSTEMTIME st;
+            createsystime(st);
+            s.FormatCat(", %d:%02d start on %d-%d-%d", st.wHour, st.wMinute, st.wYear, st.wMonth, st.wDay);
+        }
     }
 
     int print(FILE *f)
