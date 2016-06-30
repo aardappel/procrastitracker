@@ -13,9 +13,14 @@ StringPool strpool;
 
 DWORD mainthreadid = 0;
 
-void panic(char *what)
+void warn(char *what)
 {
     MessageBoxA(NULL, what, "procrastitracker", MB_OK);
+}
+
+void panic(char *what)
+{
+    warn(what);
     exit(0);
 }
 
@@ -369,7 +374,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         default:
             if (message == WM_TASKBARCREATED)  // explorer has restarted
             {
-                if (!CreateTaskBarIcon(hWnd, NIM_ADD)) panic("PT: Cannot recreate task bar icon");
+                // See: http://twigstechtips.blogspot.com/2011/02/c-detect-when-windows-explorer-has.html
+                Sleep(3000);  // Apparently if we re-create it too quickly, it will fail.
+                if (!CreateTaskBarIcon(hWnd, NIM_ADD)) warn("PT: Cannot recreate task bar icon");
             }
             return DefWindowProc(hWnd, message, wParam, lParam);
     }
