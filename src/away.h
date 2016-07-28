@@ -44,7 +44,11 @@ void CreateAwayDialog(DWORD awaysecs)
     if (awaydialog) EndDialog(awaydialog, IDC_BUTTON8);  // if the user hadn't responded to the previous dialog, kill it
     awaysecsdialog = awaysecs;
     awaydialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_AWAYDIALOG), mainhwnd, Away);
-    if (!awaydialog)
+    if (awaydialog)
+    {
+        SetWindowPos(mainhwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    }
+    else
     {
         DWORD err = GetLastError();
         printf("CreateDialog failed: %d\n", err);
