@@ -1,4 +1,12 @@
 
+BOOL CALLBACK EnumChildWindowsCallback(HWND hWnd, LPARAM lp)
+{
+    auto procids = (DWORD *)lp;
+    DWORD pid = 0;
+    GetWindowThreadProcessId(hWnd, &pid);
+    if (pid != procids[0]) procids[1] = pid;
+    return TRUE;
+}
 
 VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
 {
@@ -41,10 +49,16 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
     HWND h = GetForegroundWindow();
     if (h)
     {
-        DWORD procid = 0;
-        GetWindowThreadProcessId(h, &procid);
+        DWORD procids[] = { 0, 0 };
+        GetWindowThreadProcessId(h, procids);
+        procids[1] = procids[0];
 
-        HANDLE ph = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ /*|PROCESS_SET_QUOTA*/, FALSE, procid);
+        // Windows 8/10 hide the real process in a wrapper process called WWAHost.exe or ApplicationFrameHost.exe,
+        // so look for child windows with a different id, then use that instead.
+        // From: http://stackoverflow.com/questions/32360149/name-of-process-for-active-window-in-windows-8-10
+        EnumChildWindows(h, EnumChildWindowsCallback, (LPARAM)procids);
+
+        HANDLE ph = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ /*|PROCESS_SET_QUOTA*/, FALSE, procids[1]);
         if (ph)
         {
             // SIZE_T min = 0, max = 0;
@@ -53,7 +67,7 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
 
             DWORD count;
             HMODULE hm;
-            if (qfpin)  // we're on vista, only this function allows a 32bit process to query a 64bit one
+            if (qfpin)  // we're on Vista or above, only this function allows a 32bit process to query a 64bit one
             {
                 wchar_t uexename[MAXTMPSTR];
                 DWORD testl = sizeof(uexename);
@@ -76,15 +90,21 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
         }
 
         if (strcmp(exename, "firefox") == 0 || strcmp(exename, "iexplore") == 0 || strcmp(exename, "chrome") == 0 ||
-            strcmp(exename, "opera") == 0 || strcmp(exename, "netscape") == 0 || strcmp(exename, "netscape6") == 0)
+            strcmp(exename, "opera") == 0 || strcmp(exename, "netscape") == 0 || strcmp(exename, "netscape6") == 0 ||
+            strcmp(exename, "microsoftedge") == 0)
         {
             // TODO: can we get a UTF-8 URL out of this somehow, if the URL contains percent encoded unicode chars?
             ddereq(exename, "WWW_GetWindowInfo", "0xFFFFFFFF", url, MAXTMPSTR);
 
-            if (!*url && !strcmp(exename, "chrome"))
+            if (!*url)
             {
-                // Chrome doesn't support DDE, get last url change from it:
-                strncpy(url, current_chrome_url, MAXTMPSTR);
+                if (!strcmp(exename, "chrome"))
+                {
+                    // Chrome doesn't support DDE, get last url change from it:
+                    strncpy(url, current_chrome_url, MAXTMPSTR);
+                }
+
+                // FIXME: Edge doesn't support DDE either, but currently no known workaround.
             }
 
             char *http = strstr(url, "://");
