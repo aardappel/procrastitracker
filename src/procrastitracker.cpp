@@ -32,6 +32,7 @@ bool changesmade = false;
 DWORD lasttracktime = 0;
 DWORD awaysecsdialog = 0;
 
+
 DWORD maxsecondsforbargraph = 100000;
 DWORD bargraphwidth = 100;
 
@@ -144,6 +145,7 @@ enum
 
 numeditbox minfilter = {NULL, 0, 0, 60 * 24, IDC_EDIT2};
 
+DWORD timer_sample_val = 0;  // May be different from PREF_SAMPLE since timer doesn't get reset.
 numeditbox prefs[NUM_PREFS] = {{NULL, 5, 1, 60, IDC_EDIT1},     {NULL, 180, 5, 3600, IDC_EDIT3},
                                {NULL, 10, 5, 60, IDC_EDIT4},    {NULL, 10, 1, 60, IDC_EDIT5},
                                {NULL, 300, 0, 3600, IDC_EDIT6}, {NULL, 0, 0, 9999, IDC_EDIT7}};
@@ -475,6 +477,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     lastsavetime = GetTickCount();
     lasttracktime = GetTickCount();
     SetTimer(NULL, NULL, prefs[PREF_SAMPLE].ival * 1000, timerfunc);
+    timer_sample_val = prefs[PREF_SAMPLE].ival;
 
     /*
     extern bool setuprawinput();

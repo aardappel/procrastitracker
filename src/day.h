@@ -42,8 +42,8 @@ struct daydata
         }
         else
         {
-            seconds += prefs[PREF_SAMPLE].ival;
-            if (idletime > prefs[PREF_SEMIIDLE].ival) semiidleseconds += prefs[PREF_SAMPLE].ival;
+            seconds += timer_sample_val;
+            if (idletime > prefs[PREF_SEMIIDLE].ival) semiidleseconds += timer_sample_val;
             inputhookstats(key, lmb, rmb, scr);
         }
     }
