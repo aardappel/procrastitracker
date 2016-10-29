@@ -248,17 +248,17 @@ bool CreateTaskBarIcon(HWND hWnd, DWORD action)
     return false;
 }
 
-char requestfilename[1000];
-
-BOOL FileRequest(HWND hWnd, char *defaultname, char *exts, char *title, bool doexport = true)
+BOOL FileRequest(HWND hWnd, char *requestfilename, size_t reqlen, char *defaultname, char *exts, char *title, bool doexport = true, bool multi = false)
 {
     OPENFILENAMEA ofn;
     memset(&ofn, 0, sizeof(ofn));
     strcpy(requestfilename, defaultname);
     ofn.lStructSize = sizeof(OPENFILENAMEA);
     ofn.lpstrFile = requestfilename;
-    ofn.nMaxFile = sizeof(requestfilename);
-    ofn.Flags = OFN_NOCHANGEDIR | OFN_ENABLESIZING | OFN_PATHMUSTEXIST | (doexport ? 0 : OFN_FILEMUSTEXIST);
+    ofn.nMaxFile = reqlen;
+    ofn.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_ENABLESIZING | OFN_PATHMUSTEXIST |
+                (doexport ? 0 : OFN_FILEMUSTEXIST) |
+                (multi ? 0 : OFN_ALLOWMULTISELECT);
     ofn.hwndOwner = hWnd;
     ofn.lpstrFilter = exts;
     ofn.lpstrTitle = title;
@@ -290,8 +290,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 case 'EH':
                 {
                     recompaccum();
-                    if (FileRequest(hWnd, "procrastitracker_report.html",
-                                    "HTML Files\0*.html;*.htm\0All Files\0*.*\0\0", "Save Exported HTML File As..."))
+                    char requestfilename[1000];
+                    if (FileRequest(hWnd, requestfilename, sizeof(requestfilename),
+                                    "procrastitracker_report.html",
+                                    "HTML Files\0*.html;*.htm\0All Files\0*.*\0\0",
+                                    "Save Exported HTML File As..."))
                         exporthtml(requestfilename);
                     break;
                 }
@@ -299,7 +302,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 case 'EF':
                 {
                     recompaccum();
-                    if (FileRequest(hWnd, "exported_view.PT",
+                    char requestfilename[1000];
+                    if (FileRequest(hWnd, requestfilename, sizeof(requestfilename),
+                                    "exported_view.PT",
                                     "ProcrastiTracker Database Files\0*.PT\0All Files\0*.*\0\0",
                                     "Save Exported Database View As..."))
                         save(true, requestfilename);
@@ -308,10 +313,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
                 case 'MD':
                 {
-                    if (FileRequest(hWnd, "db_fromothercomputer.PT",
+                    char requestfilename[100000];  // Must fit many filenames.
+                    if (FileRequest(hWnd, requestfilename, sizeof(requestfilename),
+                                    "db_fromothercomputer.PT",
                                     "ProcrastiTracker Database Files\0*.PT\0All Files\0*.*\0\0",
                                     "Merge Database File Into Current Database..."))
-                        mergedb(requestfilename);
+                    {
+                        String dir(requestfilename);
+                        auto it = requestfilename + dir.Len() + 1;
+                        if (!*it)  // Single filename.
+                        {
+                            OutputDebugF("merging single file: \"%s\"\n", requestfilename);
+                            mergedb(requestfilename);
+                        }
+                        else  // Multiple filenames.
+                        {
+                            dir.Cat("\\");
+                            while (*it)
+                            {
+                                String fn(dir.c_str());
+                                auto len = strlen(it);
+                                fn.Cat(it, len);
+                                it += len + 1;
+                                OutputDebugF("merging multiple files: \"%s\"\n", fn.c_str());
+                                mergedb(fn.c_str());
+                            }
+                        }
+                    }
                     break;
                 }
 
