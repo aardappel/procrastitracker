@@ -186,6 +186,18 @@ long handleCustomDraw(HWND hWndTreeView, LPNMTVCUSTOMDRAW pNMTVCD)
     return 0;
 }
 
+bool ApplyTagToNode(HWND hDlg)
+{
+    int sel = SendMessage(taglist, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
+    if (sel >= 0 && selectednode && sel != selectednode->tag)
+    {
+        selectednode->tag = sel;
+        rendertree(hDlg, true);
+        return true;
+    }
+    return false;
+}
+
 long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR)
 {
     switch (pNMHDR->code)
@@ -219,61 +231,69 @@ long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR)
             NMTVKEYDOWN *kd = (NMTVKEYDOWN *)pNMHDR;
             short ctrl = GetKeyState(VK_CONTROL);
             if (selectednode && (ctrl & 0x8000)) switch (kd->wVKey)
+            {
+                case 'C':
                 {
-                    case 'C':
+                    if (selectednode->last)
                     {
-                        if (selectednode->last)
-                        {
-                            char buf[100] = "";
-                            CWin32InputBox::InputBox("Manual Override",
-                                                     "Enter new amount of minutes to add to this node", buf, 100, false,
-                                                     hWndDlg);
-                            int newv = (int)selectednode->last->seconds + atoi(buf) * 60;
-                            selectednode->last->seconds = max(newv, 0);
-                            rendertree(hWndDlg, false);
-                        }
-                        return TRUE;
-                    }
-
-                    case 'H':
-                        if (selectednode != root)
-                        {
-                            selectednode->hidden = true;
-                            rendertree(hWndDlg, false);
-                        }
-                        return TRUE;
-
-                    case 'U':
-                        selectednode->clearhidden();
+                        char buf[100] = "";
+                        CWin32InputBox::InputBox("Manual Override",
+                                                    "Enter new amount of minutes to add to this node", buf, 100, false,
+                                                    hWndDlg);
+                        int newv = (int)selectednode->last->seconds + atoi(buf) * 60;
+                        selectednode->last->seconds = max(newv, 0);
                         rendertree(hWndDlg, false);
-                        return TRUE;
+                    }
+                    return TRUE;
+                }
 
-                    case 'P':
-                        if (selectednode != root)
-                        {
-                            selectednode->firstinchain()->mergallsubstring();
-                            rendertree(hWndDlg, false);
-                        }
-                        return TRUE;
+                case 'H':
+                    if (selectednode != root)
+                    {
+                        selectednode->hidden = true;
+                        rendertree(hWndDlg, false);
+                    }
+                    return TRUE;
 
-                    case 'M':
-                        if (selectednode != root)
+                case 'U':
+                    selectednode->clearhidden();
+                    rendertree(hWndDlg, false);
+                    return TRUE;
+
+                case 'P':
+                    if (selectednode != root)
+                    {
+                        selectednode->firstinchain()->mergallsubstring();
+                        rendertree(hWndDlg, false);
+                    }
+                    return TRUE;
+
+                case 'M':
+                    if (selectednode != root)
+                    {
+                        if (prevselectednode)
                         {
-                            if (prevselectednode)
+                            prevselectednode = prevselectednode->firstinchain();
+                            selectednode = selectednode->firstinchain();
+                            if (prevselectednode != selectednode && prevselectednode->parent)
                             {
-                                prevselectednode = prevselectednode->firstinchain();
-                                selectednode = selectednode->firstinchain();
-                                if (prevselectednode != selectednode && prevselectednode->parent)
-                                {
-                                    selectednode->merge(*prevselectednode);
-                                    prevselectednode->parent->remove(prevselectednode);
-                                    selectednode = prevselectednode = NULL;
-                                    rendertree(hWndDlg, false);
-                                }
+                                selectednode->merge(*prevselectednode);
+                                prevselectednode->parent->remove(prevselectednode);
+                                selectednode = prevselectednode = NULL;
+                                rendertree(hWndDlg, false);
                             }
                         }
-                        return TRUE;
+                    }
+                    return TRUE;
+            }
+            else if (selectednode) switch (kd->wVKey)
+            {
+                case 'T':  // Apply tag to node.
+                {
+                    if (ApplyTagToNode(hWndDlg)) return TRUE;
+                    break;
                 }
+            }
             break;
         }
         /*
@@ -719,13 +739,7 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
                 }
                 case IDC_BUTTON2:
                 {
-                    int sel = SendMessage(taglist, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
-                    if (sel >= 0 && selectednode && sel != selectednode->tag)
-                    {
-                        selectednode->tag = sel;
-                        rendertree(hDlg, true);
-                        return (INT_PTR)TRUE;
-                    }
+                    if (ApplyTagToNode(hDlg)) return (INT_PTR)TRUE;
                     break;
                 }
                 case IDC_BUTTON3:
