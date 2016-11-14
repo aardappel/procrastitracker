@@ -50,7 +50,7 @@
 #include <memory.h>
 #include <tchar.h>
 #include <stdio.h>
-#include <new.h>
+// #include <new.h>
 #include <math.h>
 #include <assert.h>
 

@@ -162,7 +162,7 @@ struct node : SlabAllocated<node>
             {
                 Vector<node *> v;
                 ht->getelements(v);
-                v.sort(nodesorter);
+                v.sort((void*)nodesorter);
                 fprintf(f, "<table border=0 cellspacing=0 cellpadding=3>\n");
                 loopv(i, v)
                 {
@@ -429,7 +429,7 @@ struct node : SlabAllocated<node>
         {
             Vector<node *> v;
             ht->getelements(v);
-            v.sort(nodesorter);
+            v.sort((void*)nodesorter);
             int timelevel = 0;
             if (v[0]->accum.seconds > 60) timelevel++;
             if (v[0]->accum.seconds > 60 * 60) timelevel++;
@@ -447,7 +447,7 @@ struct node : SlabAllocated<node>
     void merge(node &o)
     {
         for (lday *od = o.last; od; od = od->next)
-        {
+        { {
             for (lday *d = last; d; d = d->next)
             {
                 if (d->nday == od->nday)
@@ -459,7 +459,7 @@ struct node : SlabAllocated<node>
             lday *nd = new lday(NULL);
             *(daydata *)nd = *(daydata *)od;
             addtotail(nd);
-        daydone:;
+          } daydone:;
         }
 
         if (o.onechild)

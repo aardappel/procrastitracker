@@ -57,7 +57,12 @@ void ddereq(char *server, char *topic, char *item, char *buf, int len)
 HWINEVENTHOOK LHook = 0;
 char current_chrome_url[MAXTMPSTR] = { 0 };
 
-void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime) {
+#ifdef MINGW32_BUG
+void WinEventProc
+#else
+void CALLBACK WinEventProc
+#endif
+(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime) {
     char classname[MAXTMPSTR];
     GetClassName(hwnd, classname, MAXTMPSTR);
     classname[MAXTMPSTR - 1] = 0;

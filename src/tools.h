@@ -5,6 +5,10 @@ typedef unsigned int uint;
 static const float PI = 3.14159265358979323846264338327950288419716939937510f; // :)
 static const float RAD = PI/180.0f;
 
+#ifdef __MINGW32__
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+
 #ifdef _DEBUG
 #define ASSERT(c) if(!(c)) { __asm int 3 }
 #else

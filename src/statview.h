@@ -1,3 +1,11 @@
+#ifdef __MINGW32__
+#define max(a,b) ((a)>(b)?(a):(b))
+typedef struct tagTVKEYDOWN {
+  NMHDR hdr;
+  WORD  wVKey;
+  UINT  flags;
+} NMTVKEYDOWN, *LPNMTVKEYDOWN;
+#endif
 
 void setbar(int tag, HDC hdc)
 {

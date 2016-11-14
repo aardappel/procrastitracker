@@ -1,7 +1,7 @@
 
 BOOL CALLBACK EnumChildWindowsCallback(HWND hWnd, LPARAM lp)
 {
-    auto procids = (DWORD *)lp;
+    auto DWORD *procids = (DWORD *)lp;
     DWORD pid = 0;
     GetWindowThreadProcessId(hWnd, &pid);
     if (pid != procids[0]) procids[1] = pid;
