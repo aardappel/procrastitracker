@@ -324,7 +324,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                                     "Merge Database File Into Current Database..."))
                     {
                         String dir(requestfilename);
-                        auto char *it = requestfilename + dir.Len() + 1;
+                        char *it = requestfilename + dir.Len() + 1;
                         if (!*it)  // Single filename.
                         {
                             OutputDebugF("merging single file: \"%s\"\n", requestfilename);
@@ -336,7 +336,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                             while (*it)
                             {
                                 String fn(dir.c_str());
-                                auto int len = strlen(it);
+                                int len = strlen(it);
                                 fn.Cat(it, len);
                                 it += len + 1;
                                 OutputDebugF("merging multiple files: \"%s\"\n", fn.c_str());

@@ -1,10 +1,10 @@
 #ifdef __MINGW32__
-#define max(a,b) ((a)>(b)?(a):(b))
-typedef struct tagTVKEYDOWN {
-  NMHDR hdr;
-  WORD  wVKey;
-  UINT  flags;
-} NMTVKEYDOWN, *LPNMTVKEYDOWN;
+#include <windef.h>
+typedef TV_KEYDOWN NMTVKEYDOWN, *LPNMTVKEYDOWN;
+// MS VS (MSDN) and g++ (MinGW) use different names for this type
+// (the structure is defined in commctrl.h, included in stdafx.h);
+// the NMTVKEYDOWN is used since Windows Vista / Windows Server 2003
+// previous Windows versions used name TV_KEYDOWN, as MinGW does
 #endif
 
 void setbar(int tag, HDC hdc)
