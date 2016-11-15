@@ -69,7 +69,7 @@ LRESULT CALLBACK MouseTracker(int code, WPARAM wParam, LPARAM lParam)
         DWORD curtime = GetTickCount();
         CheckAway(g_dwLastTick, curtime);
 
-        MOUSEHOOKSTRUCTEX *pStruct = (MOUSEHOOKSTRUCTEX *)lParam;
+        MSLLHOOKSTRUCT *pStruct = (MSLLHOOKSTRUCT *)lParam;
         switch (wParam)
         {
             case WM_LBUTTONDOWN: lmb++; break;
@@ -88,9 +88,19 @@ LRESULT CALLBACK MouseTracker(int code, WPARAM wParam, LPARAM lParam)
 }
 
 bool inputhooksetup()
-{
-    if (!g_hHkKeyboardLL) g_hHkKeyboardLL = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardTracker, NULL, 0);
-    if (!g_hHkMouseLL) g_hHkMouseLL = SetWindowsHookEx(WH_MOUSE_LL, MouseTracker, NULL, 0);
+{ // WINVER = 0x0501 for Windows XP, it needs non-NULL hInst arg
+  // in order to work;  what about newer versions of Windows?
+  // if there is a problem for some other version, try changing
+  // the 0x0501 to this version number, maybe it will help
+  // for VINVER < 0x0501  ICC_STANDARD_CLASSES  is undefined
+  // in procrastitracker.cpp, so it cannot be used below Win XP
+#if WINVER <= 0x0501
+    extern HINSTANCE hInst;
+#else
+#define hInst NULL
+#endif
+    if (!g_hHkKeyboardLL) g_hHkKeyboardLL = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardTracker, hInst, 0);
+    if (!g_hHkMouseLL) g_hHkMouseLL = SetWindowsHookEx(WH_MOUSE_LL, MouseTracker, hInst, 0);
 
     g_dwLastTick = GetTickCount();
 
