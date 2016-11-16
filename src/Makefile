@@ -7,7 +7,7 @@
 main: pt.exe
 
 clean:
-	del *.o resource.h ..\\procrastitracker\\pt-resource.o
+	rm -f *.o resource.h ../procrastitracker/pt-resource.o
 
 # source files used to build procrastitracker executable pt.exe
 # cpp: IdleTracker.cpp inputdlg.cpp procrastitracker.cpp stdafx.cpp
@@ -15,6 +15,7 @@ clean:
 # h: nodedb.h prefview.h regview.h slaballoc.h statview.h stdafx.h
 # h: timercallback.h tools.h win32tools.h ../procrastitracker/resource.h
 # rc: ../procrastitracker/procrastitracker.rc (and likely more there)
+# lib: z psapi comctl32 comdlg32 shlwapi oleacc ole32 gdi32 stdc++
 
 # need _WIN32_WINNT >= 0x0501, or ICC_STANDARD_CLASSES is undefined
 COPT=-DWINVER=0x0501 -D_WIN32_WINNT=0x0501 -D_WIN32_IE=0x500 -DMINGW32_BUG

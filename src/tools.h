@@ -5,10 +5,6 @@ typedef unsigned int uint;
 static const float PI = 3.14159265358979323846264338327950288419716939937510f; // :)
 static const float RAD = PI/180.0f;
 
-#ifdef __MINGW32__
-#include <windef.h>
-#endif
-
 #ifdef _DEBUG
 #define ASSERT(c) if(!(c)) { __asm int 3 }
 #else
@@ -116,7 +112,7 @@ template <class T> class Vector : public NonCopyable
     int size()   { return ulen; }
 
     void setsize   (uint i) { while(ulen>i) drop(); }    // explicitly destruct elements
-    void setsize_nd(uint i) { ulen = min(ulen, i); }    
+    void setsize_nd(uint i) { ulen = std::min(ulen, i); }    
 
     void sort(void *cf) { qsort(buf, ulen, sizeof(T), (int (__cdecl *)(const void *, const void *))cf); }
     

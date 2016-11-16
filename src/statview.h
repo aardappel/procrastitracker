@@ -1,5 +1,4 @@
 #ifdef __MINGW32__
-#include <windef.h>
 typedef TV_KEYDOWN NMTVKEYDOWN, *LPNMTVKEYDOWN;
 // MS VS (MSDN) and g++ (MinGW) use different names for this type
 // (the structure is defined in commctrl.h, included in stdafx.h);
@@ -249,7 +248,7 @@ long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR)
                                                     "Enter new amount of minutes to add to this node", buf, 100, false,
                                                     hWndDlg);
                         int newv = (int)selectednode->last->seconds + atoi(buf) * 60;
-                        selectednode->last->seconds = max(newv, 0);
+                        selectednode->last->seconds = std::max(newv, 0);
                         rendertree(hWndDlg, false);
                     }
                     return TRUE;
