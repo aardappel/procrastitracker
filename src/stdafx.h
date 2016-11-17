@@ -31,6 +31,7 @@
 #define _WIN32_WINDOWS 0x0410 // Change this to the appropriate value to target Windows Me or later.
 #endif
 
+#define NOMINMAX
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 // Windows Header Files:
 #include <windows.h>
@@ -55,6 +56,7 @@
 #include <assert.h>
 
 #include <string>
+#include <algorithm>
 
 #include "zlib.h"
 
