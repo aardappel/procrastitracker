@@ -11,6 +11,10 @@ SlabAlloc pool;
 #include "tools.h"
 StringPool strpool;
 
+#ifdef __MINGW32__
+#define sprintf_s snprintf
+#endif
+
 DWORD mainthreadid = 0;
 
 void warn(char *what)
@@ -320,7 +324,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                                     "Merge Database File Into Current Database..."))
                     {
                         String dir(requestfilename);
-                        auto it = requestfilename + dir.Len() + 1;
+                        char *it = requestfilename + dir.Len() + 1;
                         if (!*it)  // Single filename.
                         {
                             OutputDebugF("merging single file: \"%s\"\n", requestfilename);
@@ -332,7 +336,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                             while (*it)
                             {
                                 String fn(dir.c_str());
-                                auto len = strlen(it);
+                                int len = strlen(it);
                                 fn.Cat(it, len);
                                 it += len + 1;
                                 OutputDebugF("merging multiple files: \"%s\"\n", fn.c_str());
@@ -504,7 +508,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 
     lastsavetime = GetTickCount();
     lasttracktime = GetTickCount();
+#ifdef MINGW32_BUG
+    SetTimer(NULL, 0, prefs[PREF_SAMPLE].ival * 1000, timerfunc);
+#else
     SetTimer(NULL, NULL, prefs[PREF_SAMPLE].ival * 1000, timerfunc);
+#endif
     timer_sample_val = prefs[PREF_SAMPLE].ival;
 
     /*

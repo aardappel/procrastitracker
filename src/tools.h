@@ -112,7 +112,7 @@ template <class T> class Vector : public NonCopyable
     int size()   { return ulen; }
 
     void setsize   (uint i) { while(ulen>i) drop(); }    // explicitly destruct elements
-    void setsize_nd(uint i) { ulen = min(ulen, i); }    
+    void setsize_nd(uint i) { ulen = std::min(ulen, i); }    
 
     void sort(void *cf) { qsort(buf, ulen, sizeof(T), (int (__cdecl *)(const void *, const void *))cf); }
     
