@@ -8,10 +8,12 @@ You may use this library under the following license agreement:
 
 The zlib/libpng License.
 ---------------------------
-This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable
+This software is provided 'as-is', without any express or implied warranty. In no event will the
+authors be held liable
 for any damages arising from the use of this software.
 
-Permission is granted to anyone to use this software for any purpose, including commercial applications,
+Permission is granted to anyone to use this software for any purpose, including commercial
+applications,
 and to alter it and redistribute it freely, subject to the following restrictions:
 
 1. The origin of this software must not be misrepresented;
@@ -27,49 +29,34 @@ and to alter it and redistribute it freely, subject to the following restriction
 class CWin32InputBox;
 
 // Structure used to orient the inputbox behavior
-struct WIN32INPUTBOX_PARAM
-{
+struct WIN32INPUTBOX_PARAM {
     friend class CWin32InputBox;
-
-    //
     IN OPTIONAL bool bMultiline;
-
     // Pass this as none zero so to use this memory dlg template
     IN OPTIONAL LPVOID DlgTemplateData;
-
     // Pass this as none ZERO so to load DLGTEMPLATE from resources
     IN OPTIONAL char *DlgTemplateName;
-
     // passing both "DlgTemplateName" and "DlgTemplateData" ZERO will cause
     // the dialog to use his default embedded resource
-
     // Center on monitor or owner window?
     IN OPTIONAL bool bCenter;
-
     // Want to add more styles to the dialog?
     IN OPTIONAL DWORD dwStylesPlus, dwStylesMinus;
     IN OPTIONAL DWORD dwExStylesPlus, dwExStylesMinus;
-
     IN char *szTitle, *szPrompt;
-
     // Return buffer
     OUT LPTSTR szResult;
     IN DWORD nResultSize;
-
     // Owner window
     HWND hwndOwner;
     HINSTANCE hInstance;
-
     short xPos, yPos;
-
     WIN32INPUTBOX_PARAM();
-
     private:
     HWND hDlg;
 };
 
-class CWin32InputBox
-{
+class CWin32InputBox {
     private:
     WIN32INPUTBOX_PARAM *_param;
     static LRESULT CALLBACK DlgProc(HWND, UINT, WPARAM, LPARAM);
@@ -82,10 +69,9 @@ class CWin32InputBox
     public:
     CWin32InputBox(WIN32INPUTBOX_PARAM *);
     ~CWin32InputBox();
-
     static INT_PTR InputBoxEx(WIN32INPUTBOX_PARAM *);
-    static INT_PTR InputBox(char *szTitle, char *szPrompt, char *szResult, DWORD nResultSize, bool bMultiLine = false,
-                            HWND hwndParent = 0);
+    static INT_PTR InputBox(char *szTitle, char *szPrompt, char *szResult, DWORD nResultSize,
+                            bool bMultiLine = false, HWND hwndParent = 0);
 };
 
 #endif

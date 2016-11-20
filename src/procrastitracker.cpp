@@ -17,13 +17,9 @@ StringPool strpool;
 
 DWORD mainthreadid = 0;
 
-void warn(char *what)
-{
-    MessageBoxA(NULL, what, "procrastitracker", MB_OK);
-}
+void warn(char *what) { MessageBoxA(NULL, what, "procrastitracker", MB_OK); }
 
-void panic(char *what)
-{
+void panic(char *what) {
     warn(what);
     exit(0);
 }
@@ -36,7 +32,6 @@ bool changesmade = false;
 DWORD lasttracktime = 0;
 DWORD awaysecsdialog = 0;
 
-
 DWORD maxsecondsforbargraph = 100000;
 DWORD bargraphwidth = 100;
 
@@ -45,8 +40,7 @@ int starttime, endtime, firstday;
 DWORD foldlevel = 1;
 int filterontag = -1;
 
-struct tag
-{
+struct tag {
     char name[32];
     DWORD color;
     HBRUSH br;
@@ -71,73 +65,66 @@ const int FILE_FORMAT_VERSION = 10;
 extern char databasemain[];
 extern char databaseback[];
 
-void PANIC()
-{
-    //Try to restore the latest backup
+void PANIC() {
+    // Try to restore the latest backup
     WIN32_FILE_ATTRIBUTE_DATA attr;
-
-    if (GetFileAttributesExA(databaseback, GetFileExInfoStandard, &attr) && !(attr.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-    {
+    if (GetFileAttributesExA(databaseback, GetFileExInfoStandard, &attr) &&
+        !(attr.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
         SYSTEMTIME stUTC, stLocal;
         FileTimeToSystemTime(&attr.ftLastWriteTime, &stUTC);
         SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal);
         char msg[256];
-        sprintf_s(msg, 256, "The database is corrupt. Last available backup: %04d-%02d-%02d %02d:%02d\n"
-                            "Do you want to restore it?", stLocal.wYear, stLocal.wMonth, stLocal.wDay, stLocal.wHour, stLocal.wMinute);
+        sprintf_s(msg, 256,
+                  "The database is corrupt. Last available backup: %04d-%02d-%02d %02d:%02d\n"
+                  "Do you want to restore it?",
+                  stLocal.wYear, stLocal.wMonth, stLocal.wDay, stLocal.wHour, stLocal.wMinute);
 
-        if (MessageBoxA(NULL, msg, "DB problem", MB_YESNO) == IDYES)
-        {
+        if (MessageBoxA(NULL, msg, "DB problem", MB_YESNO) == IDYES) {
             DeleteFile(databasemain);
-            if (CopyFileA(databaseback, databasemain, TRUE))
-            {
-                MessageBoxA(NULL, "Backup restored. Please restart the program.", "Backup restored", MB_OK);
+            if (CopyFileA(databaseback, databasemain, TRUE)) {
+                MessageBoxA(NULL, "Backup restored. Please restart the program.", "Backup restored",
+                            MB_OK);
                 ExitProcess(0);
             }
         }
     }
-
-    
-
-    MessageBoxA(NULL,
-                "The database is corrupt. Please restore the last backup (ProcrastiTracker makes these frequently), "
-                "and try again. See Procrastitracker start menu for database location. Exiting program..",
-                "DB problem", 0);
+    MessageBoxA(
+        NULL,
+        "The database is corrupt. Please restore the last backup (ProcrastiTracker makes these "
+        "frequently), "
+        "and try again. See Procrastitracker start menu for database location. Exiting program..",
+        "DB problem", 0);
     exit(1);
 }
 
-void gzread_s(gzFile f, void *buf, uint size)
-{
-    if (gzread(f, buf, size) < (int)size)
-    {
+void gzread_s(gzFile f, void *buf, uint size) {
+    if (gzread(f, buf, size) < (int)size) {
         gzclose(f);
         PANIC();
     }
 }
-int gzgetc_s(gzFile f)
-{
+int gzgetc_s(gzFile f) {
     int c = gzgetc(f);
     if (c == -1) PANIC();
     return c;
 }
 
 void wint(gzFile f, int i) { gzwrite(f, &i, sizeof(int)); }
-int rint(gzFile f)
-{
+
+int rint(gzFile f) {
     int i;
     gzread_s(f, &i, sizeof(int));
     return i;
 }
 
-char *rstr(gzFile f)
-{
+char *rstr(gzFile f) {
     String s;
     for (int c; c = gzgetc_s(f); s.Cat((uchar)c))
         ;
     return strpool.add(s);
 }
 
-enum
-{
+enum {
     PREF_SAMPLE = 0,
     PREF_IDLE,
     PREF_SEMIIDLE,
@@ -171,13 +158,9 @@ char databasetemp[MAX_PATH];
 
 HINSTANCE hInst;
 HWND mainhwnd = NULL;
-
 HWND awaydialog = NULL;
-
 HWND treeview = NULL;
-// HWND daystatctrl = NULL;
 HWND tagpicker = NULL;
-// HWND tagdrop = NULL;
 HWND taglist = NULL;
 HWND taglistedit = NULL;
 HWND foldslider = NULL;
@@ -187,18 +170,11 @@ HWND endingdatepicker = NULL;
 HWND keyedit = NULL;
 HWND quickcombo = NULL;
 HWND filterstr = NULL;
-
 HDC bitmapdc = NULL;
 HIMAGELIST tagimages = NULL;
-
 HBRUSH whitebrush = NULL, greybrush = NULL;
-
 node *selectednode = NULL;
 node *prevselectednode = NULL;
-/*
-node *begindragnode = NULL;
-node *enddragnode = NULL;
-*/
 
 const int bmsize = 16;
 const int daygraphwidth = 200;
@@ -209,19 +185,17 @@ const int daygraphwidth = 200;
 #include "regview.h"
 #include "away.h"
 
-INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
+INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
     UNREFERENCED_PARAMETER(lParam);
-    switch (message)
-    {
+    switch (message) {
         case WM_INITDIALOG:
-            SendMessageA(hDlg, WM_SETICON, 0, (LPARAM)LoadIcon(hInst, MAKEINTRESOURCE(IDI_PROCRASTITRACKER)));
+            SendMessageA(hDlg, WM_SETICON, 0,
+                         (LPARAM)LoadIcon(hInst, MAKEINTRESOURCE(IDI_PROCRASTITRACKER)));
             SetWindowTextA(GetDlgItem(hDlg, IDC_STATIC1), "ProcrastiTracker Version " __DATE__);
             return (INT_PTR)TRUE;
 
         case WM_COMMAND:
-            if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-            {
+            if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) {
                 EndDialog(hDlg, LOWORD(wParam));
                 return (INT_PTR)TRUE;
             }
@@ -232,28 +206,24 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 UINT WM_TASKBARCREATED = 0;
 
-bool CreateTaskBarIcon(HWND hWnd, DWORD action)
-{
+bool CreateTaskBarIcon(HWND hWnd, DWORD action) {
     NOTIFYICONDATA nid;
     ZeroMemory(&nid, sizeof(NOTIFYICONDATA));
     nid.cbSize = sizeof(NOTIFYICONDATA);
     nid.hWnd = hWnd;
     nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     nid.uCallbackMessage = WM_USER + 1;
-    nid.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_PROCRASTITRACKER));  //(HICON)LoadImage(hInst,
-                                                                         //MAKEINTRESOURCE(IDI_PROCRASTITRACKER),
-                                                                         //IMAGE_ICON, 16, 16, 0);
-    strcpy(nid.szTip, "procrastitracker (active)");                      // max 64 chars
-    loop(i, action == NIM_DELETE ? 2 : 60)
-    {
+    nid.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_PROCRASTITRACKER));
+    strcpy(nid.szTip, "procrastitracker (active)");  // max 64 chars
+    loop(i, action == NIM_DELETE ? 2 : 60) {
         if (Shell_NotifyIcon(action, &nid)) return true;
         Sleep(1000);
     }
     return false;
 }
 
-BOOL FileRequest(HWND hWnd, char *requestfilename, size_t reqlen, char *defaultname, char *exts, char *title, bool doexport = true, bool multi = false)
-{
+BOOL FileRequest(HWND hWnd, char *requestfilename, size_t reqlen, char *defaultname, char *exts,
+                 char *title, bool doexport = true, bool multi = false) {
     OPENFILENAMEA ofn;
     memset(&ofn, 0, sizeof(ofn));
     strcpy(requestfilename, defaultname);
@@ -261,38 +231,32 @@ BOOL FileRequest(HWND hWnd, char *requestfilename, size_t reqlen, char *defaultn
     ofn.lpstrFile = requestfilename;
     ofn.nMaxFile = reqlen;
     ofn.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_ENABLESIZING | OFN_PATHMUSTEXIST |
-                (doexport ? 0 : OFN_FILEMUSTEXIST) |
-                (multi ? 0 : OFN_ALLOWMULTISELECT);
+                (doexport ? 0 : OFN_FILEMUSTEXIST) | (multi ? 0 : OFN_ALLOWMULTISELECT);
     ofn.hwndOwner = hWnd;
     ofn.lpstrFilter = exts;
     ofn.lpstrTitle = title;
     return doexport ? GetSaveFileNameA(&ofn) : GetOpenFileNameA(&ofn);
 }
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     int wmId, wmEvent;
     PAINTSTRUCT ps;
     HDC hdc;
-
-    switch (message)
-    {
+    switch (message) {
         case WM_COMMAND:
             wmId = LOWORD(wParam);
             wmEvent = HIWORD(wParam);
             // inputhookcleanup();
-            switch (wmId)
-            {
-                case 'ST': DialogBox(hInst, MAKEINTRESOURCE(IDD_PROPPAGE_LARGE), hWnd, Stats); break;
-
-                case 'AS': DialogBox(hInst, MAKEINTRESOURCE(IDD_PROPPAGE_MEDIUM), hWnd, Prefs); break;
-
+            switch (wmId) {
+                case 'ST':
+                    DialogBox(hInst, MAKEINTRESOURCE(IDD_PROPPAGE_LARGE), hWnd, Stats);
+                    break;
+                case 'AS':
+                    DialogBox(hInst, MAKEINTRESOURCE(IDD_PROPPAGE_MEDIUM), hWnd, Prefs);
+                    break;
                 case 'AB': DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About); break;
-
                 case 'EX': DestroyWindow(hWnd); break;
-
-                case 'EH':
-                {
+                case 'EH': {
                     recompaccum();
                     char requestfilename[1000];
                     if (FileRequest(hWnd, requestfilename, sizeof(requestfilename),
@@ -302,9 +266,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         exporthtml(requestfilename);
                     break;
                 }
-
-                case 'EF':
-                {
+                case 'EF': {
                     recompaccum();
                     char requestfilename[1000];
                     if (FileRequest(hWnd, requestfilename, sizeof(requestfilename),
@@ -314,27 +276,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         save(true, requestfilename);
                     break;
                 }
-
-                case 'MD':
-                {
+                case 'MD': {
                     char requestfilename[100000];  // Must fit many filenames.
                     if (FileRequest(hWnd, requestfilename, sizeof(requestfilename),
                                     "db_fromothercomputer.PT",
                                     "ProcrastiTracker Database Files\0*.PT\0All Files\0*.*\0\0",
-                                    "Merge Database File Into Current Database..."))
-                    {
+                                    "Merge Database File Into Current Database...")) {
                         String dir(requestfilename);
                         char *it = requestfilename + dir.Len() + 1;
-                        if (!*it)  // Single filename.
-                        {
+                        if (!*it) {  // Single filename.
                             OutputDebugF("merging single file: \"%s\"\n", requestfilename);
                             mergedb(requestfilename);
-                        }
-                        else  // Multiple filenames.
-                        {
+                        } else { // Multiple filenames.
                             dir.Cat("\\");
-                            while (*it)
-                            {
+                            while (*it) {
                                 String fn(dir.c_str());
                                 int len = strlen(it);
                                 fn.Cat(it, len);
@@ -346,24 +301,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     }
                     break;
                 }
-
                 default:
-                    // reinstall_hooks();
                     return DefWindowProc(hWnd, message, wParam, lParam);
             }
-            // reinstall_hooks();
             break;
-
         case WM_PAINT:
             hdc = BeginPaint(hWnd, &ps);
             EndPaint(hWnd, &ps);
             break;
-
         case WM_DESTROY: PostQuitMessage(0); break;
-
         case WM_USER + 1:  // tray icon
-            if (lParam == WM_LBUTTONDBLCLK || lParam == WM_RBUTTONUP)
-            {
+            if (lParam == WM_LBUTTONDBLCLK || lParam == WM_RBUTTONUP) {
                 HMENU myMenu = CreatePopupMenu();
                 if (!myMenu) break;
 
@@ -384,31 +332,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 DestroyMenu(myMenu);
             }
             break;
-
-        /*
-        case WM_INPUT:
-        {
-            extern bool processrawinput(LPARAM lParam);
-            if (!processrawinput(lParam)) panic("problem receiving raw input!");
-            break;
-        }
-        */
-
-        case WM_APP +
-            1:  // custom message received from hook thread that we're back from idle and within the idle dialog time
+        case WM_APP + 1:  // custom message received from hook thread that we're back from idle and
+                          // within the idle dialog time
             CreateAwayDialog(lParam);
             break;
-
         case WM_SYSCOMMAND:
-            if ((wParam & 0xFFF0) == SC_MINIMIZE)
-            {
+            if ((wParam & 0xFFF0) == SC_MINIMIZE) {
                 ShowWindow(hWnd, SW_HIDE);
                 return 0;
             }
         default:
-            if (message == WM_TASKBARCREATED)  // explorer has restarted
-            {
-                // See: http://twigstechtips.blogspot.com/2011/02/c-detect-when-windows-explorer-has.html
+            if (message == WM_TASKBARCREATED) { // explorer has restarted
+                // See:
+                // http://twigstechtips.blogspot.com/2011/02/c-detect-when-windows-explorer-has.html
                 Sleep(3000);  // Apparently if we re-create it too quickly, it will fail.
                 if (!CreateTaskBarIcon(hWnd, NIM_ADD)) warn("PT: Cannot recreate task bar icon");
             }
@@ -417,33 +353,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
-{
-    //_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
-
+int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine,
+                       int nCmdShow) {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
-
     mainthreadid = GetCurrentThreadId();
-
-    // GUID guid;
-    // CoCreateGuid(&guid);
-
     HMODULE kernel32 = GetModuleHandleA("kernel32.dll");
     if (kernel32) qfpin = (QFPIN)GetProcAddress(kernel32, "QueryFullProcessImageNameW");
-
-    // InitCommonControls();
     INITCOMMONCONTROLSEX icc = {sizeof(INITCOMMONCONTROLSEX),
-                                ICC_BAR_CLASSES | ICC_DATE_CLASSES | ICC_LISTVIEW_CLASSES | ICC_STANDARD_CLASSES |
-                                    ICC_TREEVIEW_CLASSES | ICC_USEREX_CLASSES | ICC_WIN95_CLASSES};
+                                ICC_BAR_CLASSES | ICC_DATE_CLASSES | ICC_LISTVIEW_CLASSES |
+                                    ICC_STANDARD_CLASSES | ICC_TREEVIEW_CLASSES |
+                                    ICC_USEREX_CLASSES | ICC_WIN95_CLASSES};
     InitCommonControlsEx(&icc);
-
-    if (FindWindowA("PROCRASTITRACKER", NULL))  panic("ProcrastiTracker already running");
-
+    if (FindWindowA("PROCRASTITRACKER", NULL)) panic("ProcrastiTracker already running");
     if (!ddeinit()) panic("PT: Cannot initialize DDE");
     // This is for chrome only:
     eventhookinit();
-
     WNDCLASSEX wcex;
     wcex.cbSize = sizeof(WNDCLASSEX);
     wcex.style = CS_HREDRAW | CS_VREDRAW;
@@ -458,31 +383,22 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     wcex.lpszClassName = "PROCRASTITRACKER";
     wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_PROCRASTITRACKER));
     RegisterClassEx(&wcex);
-
     hInst = hInstance;
-
     whitebrush = CreateSolidBrush(0xFFFFFF);
     greybrush = CreateSolidBrush(0xb99d7f);
-
-    mainhwnd = CreateWindow("PROCRASTITRACKER", "procrastitracker", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, 300, 150,
-                            NULL, NULL, hInstance, NULL);
+    mainhwnd = CreateWindow("PROCRASTITRACKER", "procrastitracker", WS_OVERLAPPEDWINDOW,
+                            CW_USEDEFAULT, 0, 300, 150, NULL, NULL, hInstance, NULL);
     if (!mainhwnd) panic("PT: Cannot create main window");
-
     if ((WM_TASKBARCREATED = RegisterWindowMessage(TEXT("TaskbarCreated"))) == 0)
         panic("PT: Cannot register TaskbarCreated message");
-
     if (!CreateTaskBarIcon(mainhwnd, NIM_ADD)) panic("PT: Cannot create task bar icon");
-
     ShowWindow(mainhwnd, SW_HIDE /*nCmdShow*/);
     UpdateWindow(mainhwnd);
-
-    if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, databaseroot)))
-    {
+    if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, databaseroot))) {
         PathAppend(databaseroot, "\\");
-    }
-    else
-    {
-        databaseroot[0] = 0;  // should not happen, but if it does, databases will just end up in current dir
+    } else {
+        // should not happen, but if it does, databases will just end up in current dir
+        databaseroot[0] = 0;
     }
     PathAppend(databaseroot, "procrastitrackerdbs\\");
     SHCreateDirectoryEx(NULL, databaseroot, NULL);
@@ -492,64 +408,33 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     PathAppend(databasemain, "db.PT");
     PathAppend(databaseback, "db_BACKUP.PT");
     PathAppend(databasetemp, "db_TEMP.~PT");
-
-    // HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_PROCRASTITRACKER));
-
     starttime = now();
     endtime = now();
-
     load(root, databasemain, false);
-
     firstday = starttime;
-
-    // root->collectstats();
-
-    // pool.printstats();
-
     lastsavetime = GetTickCount();
     lasttracktime = GetTickCount();
-#ifdef MINGW32_BUG
+    #ifdef MINGW32_BUG
     SetTimer(NULL, 0, prefs[PREF_SAMPLE].ival * 1000, timerfunc);
-#else
+    #else
     SetTimer(NULL, NULL, prefs[PREF_SAMPLE].ival * 1000, timerfunc);
-#endif
+    #endif
     timer_sample_val = prefs[PREF_SAMPLE].ival;
-
-    /*
-    extern bool setuprawinput();
-    if (!setuprawinput()) panic("can't create raw input");
-    */
-
-    // if(!inputhooksetup()) panic("PT: Cannot set input hook");
     launchhookthread();
-
     MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0))
-    {
-        // if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
     }
-
-    // inputhookcleanup();
     killhookthread();
-
     save();
-
     CreateTaskBarIcon(mainhwnd, NIM_DELETE);
-
     ddeclean();
     eventhookclean();
-
     #ifdef _DEBUG
-    delete root;
-    strpool.clear();
+        delete root;
+        strpool.clear();
     #endif
-
-    // pool.printstats();
-
     return (int)msg.wParam;
 }
 
