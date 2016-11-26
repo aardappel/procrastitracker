@@ -1,13 +1,11 @@
 
-struct tagstat
-{
+struct tagstat {
     DWORD seconds[MAXTAGS];
     DWORD total;
 
     tagstat() : total(0) { memset(seconds, 0, sizeof(seconds)); }
     void add(tagstat &o) { loop(i, MAXTAGS) seconds[i] += o.seconds[i]; }
-    bool deviates(int total)
-    {
+    bool deviates(int total) {
         loop(i, MAXTAGS) if (seconds[i] && seconds[i] != total) return true;
         return false;
     }
@@ -16,8 +14,7 @@ struct tagstat
 
 Vector<tagstat> daystats;
 
-struct node : SlabAllocated<node>
-{
+struct node : SlabAllocated<node> {
     node *parent;
     char *nname;
     Hashtable<node *> *ht;
@@ -29,7 +26,6 @@ struct node : SlabAllocated<node>
     bool hidden;
     bool expanded;
     bool instrfilter;
-//    static int nodesorter(node **a, node **b);
 
     node(char *_name, node *_p)
         : ht(NULL),
@@ -41,20 +37,16 @@ struct node : SlabAllocated<node>
           ts(NULL),
           hidden(false),
           expanded(false),
-          instrfilter(true)
-    {
-    }
+          instrfilter(true) {}
 
-    ~node()
-    {
+    ~node() {
         DELETEP(onechild);
         DELETEP(ht);
         DELETEP(last);
         DELETEP(ts);
     }
 
-    void remove(node *o)
-    {
+    void remove(node *o) {
         if (onechild == o)
             onechild = NULL;
         else if (ht)
@@ -62,49 +54,41 @@ struct node : SlabAllocated<node>
         delete o;
     }
 
-    node *treeparent()
-    {
+    node *treeparent() {
         node *n = parent;
         while (n && n->onechild) n = n->parent;
         return n ? n : this;
     }
 
-    node *firstinchain()
-    {
+    node *firstinchain() {
         node *n = this;
         while (n->parent && n->parent->onechild) n = n->parent;
         return n;
     }
 
-    void clearhidden()
-    {
+    void clearhidden() {
         hidden = false;
         if (onechild)
             onechild->clearhidden();
-        else if (ht)
-        {
+        else if (ht) {
             ht->resetiter();
             while (ht->validiter()) ht->nextiter()->clearhidden();
         }
     }
 
-    int gettag()
-    {
+    int gettag() {
         node *n = this;
         while (!n->tag && n->parent) n = n->parent;
         return n->tag;
     }
 
-    node *addnode(node *n)
-    {
+    node *addnode(node *n) {
         (*ht)[n->nname] = n;
         return n;
     }
 
-    node *add(char *subname)
-    {
-        if (!ht)
-        {
+    node *add(char *subname) {
+        if (!ht) {
             if (!onechild) return onechild = new node(subname, this);
             if (strcmp(onechild->nname, subname) == 0) return onechild;
             ht = new Hashtable<node *>(4);
@@ -115,19 +99,15 @@ struct node : SlabAllocated<node>
         return np ? *np : addnode(new node(subname, this));
     }
 
-    int numdays()
-    {
+    int numdays() {
         int n = 0;
         for (lday *d = last; d; d = d->next) n++;
         return n;
     }
 
-    void hit(SYSTEMTIME &st, DWORD idletime, DWORD awaysecs)
-    {
-        if (last)
-        {
-            if (last->nday == dayordering(st))
-            {
+    void hit(SYSTEMTIME &st, DWORD idletime, DWORD awaysecs) {
+        if (last) {
+            if (last->nday == dayordering(st)) {
                 last->hit(idletime, awaysecs);
                 return;
             }
@@ -139,15 +119,12 @@ struct node : SlabAllocated<node>
     }
 
     void formatstats(String &s) { accum.formatstats(s, treeparent()->accum.seconds); }
-    void print(FILE *f, bool filtered)
-    {
-        if (hidden) return;
 
+    void print(FILE *f, bool filtered) {
+        if (hidden) return;
         fprintf(f, "%s", nname);
-        if (onechild)
-        {
-            if (!filtered || onechild->accum.seconds)
-            {
+        if (onechild) {
+            if (!filtered || onechild->accum.seconds) {
                 fprintf(f, " - ");
                 onechild->print(f, filtered);
             }
@@ -156,22 +133,19 @@ struct node : SlabAllocated<node>
         String s;
         formatstats(s);
         fprintf(f, "<font size=-2> - %s</font>", s.c_str());
-        if (ht)
-        {
+        if (ht) {
             int num = numnotfiltered(filtered);
-            if (num)
-            {
+            if (num) {
                 Vector<node *> v;
                 ht->getelements(v);
                 v.sort((void *)nodesorter);
                 fprintf(f, "<table border=0 cellspacing=0 cellpadding=3>\n");
-                loopv(i, v)
-                {
-                    if (!filtered || v[i]->accum.seconds)
-                    {
+                loopv(i, v) {
+                    if (!filtered || v[i]->accum.seconds) {
                         String s;
                         v[i]->accum.format(s, 0);
-                        fprintf(f, "<tr><td align=right valign=top><strong>%s</strong></td><td>", s.c_str());
+                        fprintf(f, "<tr><td align=right valign=top><strong>%s</strong></td><td>",
+                                s.c_str());
                         v[i]->print(f, filtered);
                         fprintf(f, "</tr></td>\n");
                     }
@@ -182,129 +156,91 @@ struct node : SlabAllocated<node>
         }
     }
 
-    int numnotfiltered(bool filtered)
-    {
+    int numnotfiltered(bool filtered) {
         int num = 0;
         ht->resetiter();
-        while (ht->validiter())
-        {
+        while (ht->validiter()) {
             node *n = ht->nextiter();
             if (!filtered || n->accum.seconds) num++;
         }
         return num;
     }
 
-    void save(gzFile f, bool filtered)
-    {
+    void save(gzFile f, bool filtered) {
         gzwrite(f, nname, (int)strlen(nname) + 1);
         wint(f, tag);
         gzputc(f, hidden);
-
-        if (filtered)
-        {
+        if (filtered) {
             Vector<lday *> infilter;
-            if (node_is_in_filter())
-            {
-                for (lday *d = last; d; d = d->next)
-                {
-                    if (day_is_in_filter(d->nday))
-                    {
-                        infilter.push(d);
-                    }
+            if (node_is_in_filter()) {
+                for (lday *d = last; d; d = d->next) {
+                    if (day_is_in_filter(d->nday)) { infilter.push(d); }
                 }
             }
             wint(f, infilter.size());
             for (int i = 0; i < infilter.size(); i++) infilter[i]->save(f);
             infilter.setsize_nd(0);
-        }
-        else
-        {
+        } else {
             wint(f, numdays());
             for (lday *d = last; d; d = d->next) d->save(f);
         }
-
-        if (onechild && (!filtered || onechild->accum.seconds))
-        {
+        if (onechild && (!filtered || onechild->accum.seconds)) {
             wint(f, 1);
             onechild->save(f, filtered);
             return;
         }
-
-        if (ht)
-        {
+        if (ht) {
             int num = numnotfiltered(filtered);
-            if (num)
-            {
+            if (num) {
                 wint(f, num);
                 ht->resetiter();
-                while (ht->validiter())
-                {
+                while (ht->validiter()) {
                     node *n = ht->nextiter();
                     if (!filtered || n->accum.seconds) n->save(f, filtered);
                 }
                 return;
             }
         }
-
         wint(f, 0);
     }
 
-    bool load(gzFile f, int version, bool merge)
-    {
+    bool load(gzFile f, int version, bool merge) {
         // FF: struct NODE {
-
         // FF: char *name (null terminated bytes)
         nname = rstr(f);
-
         if (version <= 1) rint(f);
-
         // FF: int tagindex
         if (version >= 3) tag = rint(f);
-
         // FF: char ishidden
         if (version >= 7) hidden = gzgetc_s(f) != 0;
-
         // FF: int numberofdays
         int numdays = rint(f);
-
-        if (numdays)
-        {
+        if (numdays) {
             lday **dp = &last;
-            loop(i, numdays)
-            {
+            loop(i, numdays) {
                 *dp = new lday(NULL);
                 // FF: DAY days[numberofdays]
                 (*dp)->load(f, version);
                 dp = &(*dp)->next;
             }
         }
-
         // FF: int numchildren
         int numchildren = rint(f);
-        if (numchildren)
-        {
-            if (numchildren == 1)
-            {
+        if (numchildren) {
+            if (numchildren == 1) {
                 onechild = new node("", this);
-                if (onechild->load(f, version, merge))
-                {
+                if (onechild->load(f, version, merge)) {
                     DELETEP(onechild);
                     numchildren = 0;
                 }
-            }
-            else
-            {
+            } else {
                 int bits = int(logf(numchildren) / logf(2)) + 2;
                 // FF: NODE children[numchildren]
-                loop(i, numchildren)
-                {
+                loop(i, numchildren) {
                     node *n = new node("", this);
-                    if (n->load(f, version, merge))
-                    {
+                    if (n->load(f, version, merge)) {
                         DELETEP(n);
-                    }
-                    else
-                    {
+                    } else {
                         if (!ht) ht = new Hashtable<node *>(bits);
                         addnode(n);
                     }
@@ -312,25 +248,18 @@ struct node : SlabAllocated<node>
                 numchildren = ht ? ht->numelems : 0;
             }
         }
-
         // cull this node if possible
         if (numchildren) return false;
         if (!parent) return false;
         if (!last) return true;
-
-        for (lday **d = &last; *d;)
-        {
-            if ((*d)->seconds < prefs[PREF_CULL].ival)
-            {
+        for (lday **d = &last; *d;) {
+            if ((*d)->seconds < prefs[PREF_CULL].ival) {
                 lday *dc = *d;
                 *d = dc->next;
                 dc->next = NULL;
-                if (parent->last)
-                {
-                    for (lday *pd = parent->last; pd; pd = pd->next)
-                    {
-                        if (dc->nday == pd->nday)
-                        {
+                if (parent->last) {
+                    for (lday *pd = parent->last; pd; pd = pd->next) {
+                        if (dc->nday == pd->nday) {
                             pd->accumulate(*dc, false);
                             DELETEP(dc);
                             goto found;
@@ -338,40 +267,34 @@ struct node : SlabAllocated<node>
                     }
                 }
                 parent->addtotail(dc);
-            found:;
-            }
-            else
-            {
+                found:;
+            } else {
                 d = &(*d)->next;
             }
         }
-
         return last == NULL;
-
         // FF: }
     }
 
-    void addtotail(lday *o)
-    {
+    void addtotail(lday *o) {
         lday **dp = &last;
         while (*dp) dp = &(*dp)->next;
         *dp = o;
     }
 
-    bool node_is_in_filter() { return last && (filterontag < 0 || filterontag == gettag()) && instrfilter; }
+    bool node_is_in_filter() {
+        return last && (filterontag < 0 || filterontag == gettag()) && instrfilter;
+    }
+
     bool day_is_in_filter(int o) { return o >= starttime && o <= endtime; }
 
-    void accumulate(daydata &pd, tagstat &pts)
-    {
+    void accumulate(daydata &pd, tagstat &pts) {
         accum = daydata();
         tagstat tts;
-        if (node_is_in_filter())
-        {
-            for (lday *d = last; d; d = d->next)
-            {
+        if (node_is_in_filter()) {
+            for (lday *d = last; d; d = d->next) {
                 int o = d->nday;
-                if (day_is_in_filter(o))
-                {
+                if (day_is_in_filter(o)) {
                     accum.accumulate(*d, !ht);
                     daystats[o - starttime].seconds[gettag()] += d->seconds;
                 }
@@ -380,8 +303,7 @@ struct node : SlabAllocated<node>
         }
         if (onechild)
             onechild->accumulate(accum, tts);
-        else if (ht)
-        {
+        else if (ht) {
             ht->resetiter();
             while (ht->validiter()) ht->nextiter()->accumulate(accum, tts);
         }
@@ -391,27 +313,22 @@ struct node : SlabAllocated<node>
         pd.accumulate(accum, parent && !parent->ht);
     }
 
-    void treeview(int depth, HWND hWnd, HTREEITEM parent, HTREEITEM after, int timelevel = 0, char *concat = "")
-    {
+    void treeview(int depth, HWND hWnd, HTREEITEM parent, HTREEITEM after, int timelevel = 0,
+                  char *concat = "") {
         if (hidden) return;
-
         if (!accum.seconds || accum.seconds / 60 < minfilter.ival) return;
-
         String full(concat);
         if (*concat) full.Cat(" - ");
         full.Cat(nname);
-
-        if (onechild && !last) return onechild->treeview(depth, hWnd, parent, after, timelevel, full);
-
+        if (onechild && !last)
+            return onechild->treeview(depth, hWnd, parent, after, timelevel, full);
         String s;
         accum.format(s, timelevel);
         s.Cat(" - ");
         s.Cat(full);
-
         static wchar_t us[MAXTMPSTR];
         MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, us, MAXTMPSTR);
         us[MAXTMPSTR - 1] = 0;
-
         TV_INSERTSTRUCTW tvinsert;
         tvinsert.hParent = parent;
         tvinsert.hInsertAfter = after;
@@ -420,14 +337,11 @@ struct node : SlabAllocated<node>
         tvinsert.item.lParam = (LPARAM) this;
         tvinsert.item.state = (depth < (int)foldlevel && ht) || expanded ? TVIS_EXPANDED : 0;
         tvinsert.item.stateMask = -1;
-        HTREEITEM thisone = (HTREEITEM)SendDlgItemMessageW(hWnd, IDC_TREE1, TVM_INSERTITEMW, 0, (LPARAM)&tvinsert);
-
-        if (onechild)
-        {
+        HTREEITEM thisone =
+            (HTREEITEM)SendDlgItemMessageW(hWnd, IDC_TREE1, TVM_INSERTITEMW, 0, (LPARAM)&tvinsert);
+        if (onechild) {
             onechild->treeview(depth + 1, hWnd, thisone, TVI_LAST);
-        }
-        else if (ht)
-        {
+        } else if (ht) {
             Vector<node *> v;
             ht->getelements(v);
             v.sort((void *)nodesorter);
@@ -440,83 +354,69 @@ struct node : SlabAllocated<node>
         }
     }
 
-    static int nodesorter(node **a, node **b)
-    {
-        return (*a)->accum.seconds < (*b)->accum.seconds ? 1 : (*a)->accum.seconds > (*b)->accum.seconds ? -1 : 0;
+    static int nodesorter(node **a, node **b) {
+        return (*a)->accum.seconds < (*b)->accum.seconds
+                   ? 1
+                   : (*a)->accum.seconds > (*b)->accum.seconds ? -1 : 0;
     }
 
-    void merge(node &o)
-    {
-        for (lday *od = o.last; od; od = od->next)
-        { {
-            for (lday *d = last; d; d = d->next)
+    void merge(node &o) {
+        for (lday *od = o.last; od; od = od->next) {
             {
-                if (d->nday == od->nday)
-                {
-                    d->accumulate(*od, false);
-                    goto daydone;
+                for (lday *d = last; d; d = d->next) {
+                    if (d->nday == od->nday) {
+                        d->accumulate(*od, false);
+                        goto daydone;
+                    }
                 }
+                lday *nd = new lday(NULL);
+                *(daydata *)nd = *(daydata *)od;
+                addtotail(nd);
             }
-            lday *nd = new lday(NULL);
-            *(daydata *)nd = *(daydata *)od;
-            addtotail(nd);
-          } daydone:;
+            daydone:;
         }
-
         if (o.onechild)
             add(o.onechild->nname)->merge(*o.onechild);
-        else if (o.ht)
-        {
+        else if (o.ht) {
             o.ht->resetiter();
-            while (o.ht->validiter())
-            {
+            while (o.ht->validiter()) {
                 node *n = o.ht->nextiter();
                 add(n->nname)->merge(*n);
             }
         }
     }
 
-    void mergallsubstring()
-    {
+    void mergallsubstring() {
         if (!parent || !parent->ht) return;
         parent->ht->resetiter();
-        while (parent->ht->validiter())
-        {
+        while (parent->ht->validiter()) {
             node *n = parent->ht->nextiter();
-            if (n != this && strstr(n->nname, nname))
-            {
+            if (n != this && strstr(n->nname, nname)) {
                 merge(*n);
                 parent->remove(n);
             }
         }
     }
 
-    void collectstats()
-    {
+    void collectstats() {
         statnodes++;
         statdays += numdays();
         if (!ht && !onechild) statleaf++;
-        if (onechild)
-        {
+        if (onechild) {
             statone++;
             onechild->collectstats();
-        }
-        else if (ht)
-        {
+        } else if (ht) {
             statht++;
             ht->resetiter();
             while (ht->validiter()) ht->nextiter()->collectstats();
         }
     }
 
-    void checkstrfilter(bool force)
-    {
+    void checkstrfilter(bool force) {
         instrfilter = force || stristr(nname, filterstrcontents);
-
         if (onechild)
             onechild->checkstrfilter(instrfilter);
-        else if (ht)
-        {
+        else if (ht) {
             ht->resetiter();
             while (ht->validiter()) ht->nextiter()->checkstrfilter(instrfilter);
         }
