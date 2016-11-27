@@ -3,6 +3,10 @@
 # * enter the "src" directory where this Makefile is
 # * use "make" alone to make "pt.exe" (main executable)
 # * use "make clean" to delete intermediate files
+#
+# It makes a procrastitracker executable (pt.exe) only,
+# not a Windows installer for it - does anyone know
+# how to make the installer using MinGW suite?
 
 main: pt.exe
 
@@ -23,7 +27,7 @@ COPT=-DWINVER=0x0501 -D_WIN32_WINNT=0x0501 -D_WIN32_IE=0x500 -DMINGW32_BUG
 pt.exe: procrastitracker.o IdleTracker.o inputdlg.o stdafx.o	\
 	 ../procrastitracker/pt-resource.o
 	g++ procrastitracker.o IdleTracker.o inputdlg.o stdafx.o	\
-	 ../procrastitracker/pt-resource.o  -o pt.exe			\
+	 ../procrastitracker/pt-resource.o  -static  -o pt.exe		\
 	 -lz -lpsapi -lcomctl32 -lcomdlg32 -lshlwapi -loleacc		\
 	 -lole32 -lgdi32 -lstdc++ -Wl,--subsystem,windows
 
