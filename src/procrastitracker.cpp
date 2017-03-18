@@ -341,6 +341,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 ShowWindow(hWnd, SW_HIDE);
                 return 0;
             }
+        // Fix from Alexandra Kalicinska: save the database before terminating
+        // the program due to user logout or system reboot or system shutdown
+        // (the GetMessage() loop in _tWinMain() does not get the signal;
+        //  here the program gets first WM_QUERYENDSESSION, then WM_ENDSESSION;
+        //  and return from the second terminates the program immediately)
+        case WM_QUERYENDSESSION: save(); return TRUE;
+        // case WM_ENDSESSION:
         default:
             if (message == WM_TASKBARCREATED) { // explorer has restarted
                 // See:
