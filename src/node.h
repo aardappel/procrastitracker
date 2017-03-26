@@ -26,7 +26,6 @@ struct node : SlabAllocated<node> {
     bool hidden;
     bool expanded;
     bool instrfilter;
-    //    static int nodesorter(node **a, node **b);
 
     node(char *_name, node *_p)
         : ht(NULL),
