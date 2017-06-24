@@ -45,7 +45,10 @@
           var compressed = new Zlib.Gunzip(new Uint8Array(fr.result));
           var decompressed = compressed.decompress();
           var json = PROCRASTITRACKER.load_db(decompressed);
+          var parsed = PROCRASTITRACKER.parse(json);
           elm.appendChild( renderjson.set_show_to_level(3)(json) );
+          elm.appendChild( renderjson.set_show_to_level(3)(parsed) );
+          console.log(json);
         }
         catch (e)
         {

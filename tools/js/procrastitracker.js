@@ -12,7 +12,7 @@ var PROCRASTITRACKER = (function () {
     const NUM_PREFS = 6;
 
     // result
-    var pt_data_json = {}; 
+    var pt_data_json = {};
     // seeker on pt_data
     var byte_read_pos = 0;
 
@@ -56,7 +56,8 @@ var PROCRASTITRACKER = (function () {
     };
     // read the next fixed {size} bytes as null terminated string.
     // if {size} is 0, the actual size to read is automatically decided (i.e. null terminated)
-    var rstr = function (size = 0) {
+    // by default the data is decoded as utf8 
+    var rstr = function (size = 0, utf8 = true) {
       var str = "";
       if (size > 0) {
         for (var i = 0; i < size; i++) {
@@ -76,6 +77,8 @@ var PROCRASTITRACKER = (function () {
           str += String.fromCharCode(char);
         }
       }
+      if (utf8)
+        return decodeURIComponent(escape(str));
       return str;
     };
 
@@ -125,7 +128,7 @@ var PROCRASTITRACKER = (function () {
         node['ishidden'] = (rchar() != 0 ? 1 : 0);
       node['numberofdays'] = rint();
       node['days'] = [];
-      var format = function(n) {
+      var format = function (n) {
         return ("00" + n).slice(-2);
       }
       for (var i = 0; i < node['numberofdays']; i++) {
@@ -170,7 +173,44 @@ var PROCRASTITRACKER = (function () {
     return pt_data_json;
   };
 
+  var parse_node = function (node, stack = { name: [], tagindex: [], ishidden: [], days: [] }) {
+
+    const is_leaf = (node.children.length == 0);
+
+    /* push */
+    stack.name.push(node.name);
+    //stack.tagindex.push(node.tagindex); // TODO
+    //stack.ishidden.push(node.ishidden); // TODO
+    stack.days.push(node.days);
+
+    if (is_leaf) {
+      // process leaf
+      console.log(stack.name[1] + " " + stack.name.slice(2).join("/"));
+    }
+    else {
+      // process children
+      for (var i = 0; i < node.children.length; i++) {
+        var child = node.children[i];
+        parse_node(child, stack);
+      }
+    }
+
+    /* pop */
+    stack.name.pop();
+    //stack.tagindex.pop(); // TODO
+    //stack.ishidden.pop(); // TODO
+    stack.days.pop();
+
+  };
+
+  var parse = function (pt_data_json) {
+    var root = pt_data_json.root;
+    parse_node(root);
+    return {};
+  };
+
   return {
-    load_db : load_db
+    load_db: load_db,
+    parse: parse
   }
 })();
