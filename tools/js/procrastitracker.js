@@ -95,7 +95,7 @@ var PROCRASTITRACKER = (function () {
       for (var i = 0; i < pt_data_json['numtags']; i++) {
         var tag = {};
         tag['name'] = rstr(32);
-        tag['color'] = rint();
+        tag['color'] = "#" + ("000000" + rint().toString(16)).slice(-6);
         pt_data_json['tags'][i] = tag;
       }
       if (version < 6)
@@ -125,8 +125,8 @@ var PROCRASTITRACKER = (function () {
         node['ishidden'] = (rchar() != 0 ? 1 : 0);
       node['numberofdays'] = rint();
       node['days'] = [];
-      var format = function(n, length=2) {
-        return ("0" + n).slice(-1*length);
+      var format = function(n) {
+        return ("00" + n).slice(-2);
       }
       for (var i = 0; i < node['numberofdays']; i++) {
         var day = {};
