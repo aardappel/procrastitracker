@@ -87,15 +87,15 @@ var PROCRASTITRACKER = (function () {
     pt_data_json['version'] = version;
     if (version > FILE_FORMAT_VERSION)
       throw "PT: trying to load db from newer version";
-    pt_data_json['magic'] = rint();
-    if (version >= 6 && pt_data_json['magic'] != pack_int4([0x46, 0x46, 0x54, 0x50])) /*check PTFF magic*/
+    const magic = rint();
+    if ((version >= 6) && (magic != pack_int4([0x46, 0x46, 0x54, 0x50]))) /*check PTFF magic*/
       throw "PT: not a PT database file";
     if (version >= 4) {
-      pt_data_json['numtags'] = rint();
-      if (pt_data_json['numtags'] > MAXTAGS)
+      const numtags = rint();
+      if (numtags > MAXTAGS)
         throw "PT: wrong number of tags in file"
       pt_data_json['tags'] = [];
-      for (var i = 0; i < pt_data_json['numtags']; i++) {
+      for (var i = 0; i < numtags; i++) {
         var tag = {};
         tag['name'] = rstr(32);
         tag['color'] = "#" + ("000000" + rint().toString(16)).slice(-6);
@@ -126,12 +126,12 @@ var PROCRASTITRACKER = (function () {
         node['tagindex'] = rint();
       if (version >= 7)
         node['ishidden'] = (rchar() != 0 ? 1 : 0);
-      node['numberofdays'] = rint();
+      const numberofdays = rint();
       node['days'] = [];
       var format = function (n) {
         return ("00" + n).slice(-2);
       }
-      for (var i = 0; i < node['numberofdays']; i++) {
+      for (var i = 0; i < numberofdays; i++) {
         var day = {};
         if (version < 5) {
           var st = rsystemtime();
@@ -156,9 +156,9 @@ var PROCRASTITRACKER = (function () {
         day['scrollwheel'] = rint();
         node['days'][i] = day;
       }
-      node['numchildren'] = rint();
+      const numchildren = rint();
       node['children'] = [];
-      for (var i = 0; i < node['numchildren']; i++) {
+      for (var i = 0; i < numchildren; i++) {
         node['children'][i] = load_node();
       }
       return node;
