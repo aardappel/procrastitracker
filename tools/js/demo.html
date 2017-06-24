@@ -31,32 +31,41 @@
   <script>
     var fileInput = document.getElementById("file-input");
     fileInput.addEventListener('change', function () {
-      file = fileInput.files[0];
-      fr = new FileReader();
-      fr.onload = function () {
-        var elm = document.getElementById("output");
-        // reset output
-        while (elm.hasChildNodes()) {
-          elm.removeChild(elm.lastChild);
-        }
+      // reset output
+      var output = document.getElementById("output");
+      while (output.hasChildNodes()) {
+        output.removeChild(output.lastChild);
+      }
+      if (fileInput.files.length == 0) {
+        output.appendChild( document.createTextNode("No file is selected") );
+        return;
+      };
+      var fr = new FileReader();
+      fr.onerror = function (evt) {
+        console.err(evt);
+        output.appendChild( document.createTextNode(evt) );
+      };
+      fr.onload = function (evt) {
+        console.log(evt);
         // load / decompress / shoe
         try
         {
-          var compressed = new Zlib.Gunzip(new Uint8Array(fr.result));
+          var compressed = new Zlib.Gunzip(new Uint8Array(evt.target.result));
           var decompressed = compressed.decompress();
           var json = PROCRASTITRACKER.load_db(decompressed);
           var parsed_datetime = PROCRASTITRACKER.parse_datetime(json);
           var parsed_path = PROCRASTITRACKER.parse_path(json);
-          elm.appendChild( renderjson.set_show_to_level(2)(json) );
-          elm.appendChild( renderjson.set_show_to_level(0)(parsed_datetime) );
-          elm.appendChild( renderjson.set_show_to_level(0)(parsed_path) );
+          output.appendChild( renderjson.set_show_to_level(2)(json) );
+          output.appendChild( renderjson.set_show_to_level(0)(parsed_datetime) );
+          output.appendChild( renderjson.set_show_to_level(0)(parsed_path) );
         }
         catch (e)
         {
-          elm.appendChild( document.createTextNode(e) );
+          output.appendChild( document.createTextNode(e) );
         }
       };
-      fr.readAsArrayBuffer(file);
+      console.log(fileInput.files[0]);
+      fr.readAsArrayBuffer(fileInput.files[0]);
     });
   </script>
 </body>
