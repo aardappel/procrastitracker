@@ -6,47 +6,16 @@
   <style>
     body { font-family: 'Helvetica Neue', Helvetica, Arial, serif; font-size: 1em; background: #e7e7e7; }
     pre { padding: 20px; overflow: auto; color: #f2f2f2; text-shadow: none; background: #303030; }
-
-    .renderjson a {
-      text-decoration: none;
-    }
-
-    .renderjson .disclosure {
-      color: crimson;
-      font-size: 150%;
-    }
-
-    .renderjson .syntax {
-      color: grey;
-    }
-
-    .renderjson .string {
-      color: red;
-    }
-
-    .renderjson .number {
-      color: cyan;
-    }
-
-    .renderjson .boolean {
-      color: plum;
-    }
-
-    .renderjson .key {
-      color: lightblue;
-    }
-
-    .renderjson .keyword {
-      color: lightgoldenrodyellow;
-    }
-
-    .renderjson .object.syntax {
-      color: lightseagreen;
-    }
-
-    .renderjson .array.syntax {
-      color: lightsalmon;
-    }
+    .renderjson a { text-decoration: none; }
+    .renderjson .disclosure { color: crimson; font-size: 150%; }
+    .renderjson .syntax { color: grey; }
+    .renderjson .string { color: red; }
+    .renderjson .number { color: cyan; }
+    .renderjson .boolean { color: plum; }
+    .renderjson .key { color: lightblue; }
+    .renderjson .keyword { color: lightgoldenrodyellow; }
+    .renderjson .object.syntax { color: lightseagreen; }
+    .renderjson .array.syntax { color: lightsalmon; }
   </style>
 </head>
 
@@ -65,13 +34,23 @@
       file = fileInput.files[0];
       fr = new FileReader();
       fr.onload = function () {
-        var compressed = new Zlib.Gunzip(new Uint8Array(fr.result));
-        var decompressed = compressed.decompress();
-        var json = PROCRASTITRACKER.load_db(decompressed);
-        //console.log(json);
-        document.getElementById("output").appendChild(
-          renderjson.set_show_to_level(3)(json)
-        );
+        var elm = document.getElementById("output");
+        // reset output
+        while (elm.hasChildNodes()) {
+          elm.removeChild(elm.lastChild);
+        }
+        // load / decompress / shoe
+        try
+        {
+          var compressed = new Zlib.Gunzip(new Uint8Array(fr.result));
+          var decompressed = compressed.decompress();
+          var json = PROCRASTITRACKER.load_db(decompressed);
+          elm.appendChild( renderjson.set_show_to_level(3)(json) );
+        }
+        catch (e)
+        {
+          elm.appendChild( document.createTextNode(e) );
+        }
       };
       fr.readAsArrayBuffer(file);
     });

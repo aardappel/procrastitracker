@@ -125,15 +125,14 @@ var PROCRASTITRACKER = (function () {
         node['ishidden'] = (rchar() != 0 ? 1 : 0);
       node['numberofdays'] = rint();
       node['days'] = [];
+      var format = function(n, length=2) {
+        return ("0" + n).slice(-1*length);
+      }
       for (var i = 0; i < node['numberofdays']; i++) {
         var day = {};
         if (version < 5) {
           var st = rsystemtime();
-          day['year'] = st.wYear;
-          day['month'] = st.wMonth;
-          day['day'] = st.wDay;
-          day['hour'] = st.wHour;
-          day['minute'] = st.wMinute;
+          day['datetime'] = st.wYear.toString() + "-" + format(st.wMonth.toString()) + "-" + format(st.wDay.toString()) + "T" + format(st.wHour.toString()) + ":" + format(st.wMinute.toString()) + ":" + format(st.wSecond.toString());
         }
         else {
           const nday = rshort();
@@ -144,11 +143,7 @@ var PROCRASTITRACKER = (function () {
           wYear += 2000;
           var wHour = (nminute / 60) | 0;
           var wMinute = nminute - wHour * 60;
-          day['year'] = wYear;
-          day['month'] = wMonth;
-          day['day'] = wDay;
-          day['hour'] = wHour;
-          day['minute'] = wMinute;
+          day['datetime'] = wYear.toString() + "-" + format(wMonth.toString()) + "-" + format(wDay.toString()) + "T" + format(wHour.toString()) + ":" + format(wMinute.toString()) + ":00";
         }
         day['activeseconds'] = rint();
         day['semiidleseconds'] = rint();
@@ -165,7 +160,12 @@ var PROCRASTITRACKER = (function () {
       }
       return node;
     }
+
+    // load from the root node and recursively
     pt_data_json['root'] = load_node();
+
+    if (pt_data.length != byte_read_pos)
+      throw "PT file is not read completely";
 
     return pt_data_json;
   };
