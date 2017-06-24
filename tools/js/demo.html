@@ -45,10 +45,11 @@
           var compressed = new Zlib.Gunzip(new Uint8Array(fr.result));
           var decompressed = compressed.decompress();
           var json = PROCRASTITRACKER.load_db(decompressed);
-          var parsed = PROCRASTITRACKER.parse(json);
-          elm.appendChild( renderjson.set_show_to_level(3)(json) );
-          elm.appendChild( renderjson.set_show_to_level(3)(parsed) );
-          console.log(json);
+          var parsed_datetime = PROCRASTITRACKER.parse_datetime(json);
+          var parsed_path = PROCRASTITRACKER.parse_path(json);
+          elm.appendChild( renderjson.set_show_to_level(2)(json) );
+          elm.appendChild( renderjson.set_show_to_level(0)(parsed_datetime) );
+          elm.appendChild( renderjson.set_show_to_level(0)(parsed_path) );
         }
         catch (e)
         {
