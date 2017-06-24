@@ -1,7 +1,10 @@
 Loading PT Database
 ===================
+##### Live Demo
 
-##### Example
+ - [DEMO](https://easz.github.io/procrastitracker/tools/js/demo.html)
+
+##### Usage
 
 ```js
 {
@@ -11,7 +14,6 @@ Loading PT Database
   var json = PROCRASTITRACKER.load_db(decompressed); // loaded!
 }
 ```
-
 
 ##### Required libs
 
