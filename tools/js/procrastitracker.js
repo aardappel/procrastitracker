@@ -184,19 +184,20 @@ var PROCRASTITRACKER = (function () {
 
     /* collect time */
     if (days.length > 0) {
-      const path = ((stack.name.length > 1) ? stack.name[1] : stack.name[0]) 
-        + ((stack.name.length > 2) ? (" " + stack.name.slice(2).join("/")) : "");
+      const app = ((stack.name.length > 1) ? stack.name[1] : stack.name[0]);
+      const path = ((stack.name.length > 2) ? (stack.name.slice(2).join("/")) : "/");
       for (var i = 0; i < days.length; i++) {
         var day = days[i];
         var datetime = day.datetime;
         var [date, time] = datetime.split("T");
         var activeseconds = day.activeseconds;
         var semiidleseconds = day.semiidleseconds;
-        (date in result)             || (result[date]             = {});
-        (time in result[date])       || (result[date][time]       = {});
-        (path in result[date][time]) || (result[date][time][path] = {'activeseconds': 0, 'semiidleseconds': 0});
-        result[date][time][path].activeseconds += activeseconds;
-        result[date][time][path].semiidleseconds += semiidleseconds;
+        (date in result)                  || (result[date]                  = {});
+        (time in result[date])            || (result[date][time]            = {});
+        (app  in result[date][time])      || (result[date][time][app]       = {});      
+        (path in result[date][time][app]) || (result[date][time][app][path] = {'activeseconds': 0, 'semiidleseconds': 0});
+        result[date][time][app][path].activeseconds += activeseconds;
+        result[date][time][app][path].semiidleseconds += semiidleseconds;
       }
     }
 
@@ -212,6 +213,40 @@ var PROCRASTITRACKER = (function () {
 
   var parse_node_path = function (node, result, 
                             stack = { name: [] }) {
+    const name = node.name;
+    const days = node.days;
+    const children = node.children;
+
+    /* push */
+    stack.name.push(name);
+
+    /* collect path */
+    if (days.length > 0) {
+      const app = ((stack.name.length > 1) ? stack.name[1] : stack.name[0]);
+      const path = ((stack.name.length > 2) ? (stack.name.slice(2).join("/")) : "/");
+      (app  in result)      || (result[app]       = {});
+      (path in result[app]) || (result[app][path] = {});
+      for (var i = 0; i < days.length; i++) {
+        var day = days[i];
+        var datetime = day.datetime;
+        var [date, time] = datetime.split("T");
+        var activeseconds = day.activeseconds;
+        var semiidleseconds = day.semiidleseconds;
+        (date in result[app][path])       || (result[app][path][date]       = {});
+        (time in result[app][path][date]) || (result[app][path][date][time] = {'activeseconds': 0, 'semiidleseconds': 0});
+        result[app][path][date][time].activeseconds += activeseconds;
+        result[app][path][date][time].semiidleseconds += semiidleseconds;
+      }
+    }
+
+    // process children
+    for (var i = 0; i < children.length; i++) {
+      var child = children[i];
+      parse_node_path(child, result, stack);
+    }
+
+    /* pop */
+    stack.name.pop();                              
   };
 
   var parse_datetime = function (pt_data_json) {
