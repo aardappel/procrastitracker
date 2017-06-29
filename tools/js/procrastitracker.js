@@ -1,12 +1,12 @@
 var PROCRASTITRACKER = (function () {
 
-  /** load uncompressed PT data 
+  /** load uncompressed PT data
    * @param pt_data uncompressed data in Uint8Array
    * @return PT data in json format
    */
-  var load_db = function (pt_data) {
+  var load_db = function (pt_data, encoding = 'utf8') {
 
-    // const 
+    // const
     const FILE_FORMAT_VERSION = 10;
     const MAXTAGS = 15;
     const NUM_PREFS = 6;
@@ -56,8 +56,8 @@ var PROCRASTITRACKER = (function () {
     };
     // read the next fixed {size} bytes as null terminated string.
     // if {size} is 0, the actual size to read is automatically decided (i.e. null terminated)
-    // by default the data is decoded as utf8 
-    var rstr = function (size = 0, utf8 = true) {
+    // by default the data is decoded as utf8 and failback to latin1 (encoding can be latin1, utf8.)
+    var rstr = function (size = 0, encoding = 'utf8') {
       var str = "";
       if (size > 0) {
         for (var i = 0; i < size; i++) {
@@ -77,8 +77,18 @@ var PROCRASTITRACKER = (function () {
           str += String.fromCharCode(char);
         }
       }
-      if (utf8)
-        return decodeURIComponent(escape(str));
+
+      if (encoding == 'utf8') {
+        try {
+          return decodeURIComponent(escape(str));
+        } catch(e) {
+          var arr = [];
+          for (var i = 0; i < str.length; i++) { arr.push("0x"+str.charCodeAt(i).toString(16)); }
+          console.warn(e + " " + arr);
+        }
+      }
+
+      // default 'latin1'
       return str;
     };
 
@@ -97,7 +107,7 @@ var PROCRASTITRACKER = (function () {
       pt_data_json['tags'] = [];
       for (var i = 0; i < numtags; i++) {
         var tag = {};
-        tag['name'] = rstr(32);
+        tag['name'] = rstr(32, encoding);
         tag['color'] = "#" + ("000000" + rint().toString(16)).slice(-6);
         pt_data_json['tags'][i] = tag;
       }
@@ -119,7 +129,7 @@ var PROCRASTITRACKER = (function () {
     // load node
     var load_node = function () {
       var node = {};
-      node['name'] = rstr();
+      node['name'] = rstr(0, encoding);
       if (version <= 1)
         rint();
       if (version >= 3)
@@ -173,7 +183,7 @@ var PROCRASTITRACKER = (function () {
     return pt_data_json;
   };
 
-  var parse_node_datetime = function (node, result, 
+  var parse_node_datetime = function (node, result,
                             stack = { name: [] }) {
     const name = node.name;
     const days = node.days;
@@ -194,7 +204,7 @@ var PROCRASTITRACKER = (function () {
         var semiidleseconds = day.semiidleseconds;
         (date in result)                  || (result[date]                  = {});
         (time in result[date])            || (result[date][time]            = {});
-        (app  in result[date][time])      || (result[date][time][app]       = {});      
+        (app  in result[date][time])      || (result[date][time][app]       = {});
         (path in result[date][time][app]) || (result[date][time][app][path] = {'activeseconds': 0, 'semiidleseconds': 0});
         result[date][time][app][path].activeseconds += activeseconds;
         result[date][time][app][path].semiidleseconds += semiidleseconds;
@@ -211,7 +221,7 @@ var PROCRASTITRACKER = (function () {
     stack.name.pop();
   };
 
-  var parse_node_path = function (node, result, 
+  var parse_node_path = function (node, result,
                             stack = { name: [] }) {
     const name = node.name;
     const days = node.days;
@@ -246,7 +256,7 @@ var PROCRASTITRACKER = (function () {
     }
 
     /* pop */
-    stack.name.pop();                              
+    stack.name.pop();
   };
 
   var parse_datetime = function (pt_data_json) {
