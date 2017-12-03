@@ -11,3 +11,5 @@ ipch/
 *.opensdf
 *.aps
 /ProcrastiTracker_Setup.exe
+
+*.db
