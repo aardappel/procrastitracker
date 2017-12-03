@@ -360,10 +360,51 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
     return 0;
 }
 
+void MakeDPIAware() {
+    #ifdef _WIN32
+        // Without this, Windows scales the window if scaling is set in display settings.
+        #ifndef DPI_ENUMS_DECLARED
+            typedef enum PROCESS_DPI_AWARENESS
+            {
+                PROCESS_DPI_UNAWARE = 0,
+                PROCESS_SYSTEM_DPI_AWARE = 1,
+                PROCESS_PER_MONITOR_DPI_AWARE = 2
+            } PROCESS_DPI_AWARENESS;
+        #endif
+
+        typedef BOOL (WINAPI * SETPROCESSDPIAWARE_T)(void);
+        typedef HRESULT (WINAPI * SETPROCESSDPIAWARENESS_T)(PROCESS_DPI_AWARENESS);
+        HMODULE shcore = LoadLibraryA("Shcore.dll");
+        SETPROCESSDPIAWARENESS_T SetProcessDpiAwareness = NULL;
+        if (shcore) {
+            SetProcessDpiAwareness =
+                (SETPROCESSDPIAWARENESS_T)GetProcAddress(shcore, "SetProcessDpiAwareness");
+        }
+        HMODULE user32 = LoadLibraryA("User32.dll");
+        SETPROCESSDPIAWARE_T SetProcessDPIAware = NULL;
+        if (user32) {
+            SetProcessDPIAware =
+                (SETPROCESSDPIAWARE_T)GetProcAddress(user32, "SetProcessDPIAware");
+        }
+
+        if (SetProcessDpiAwareness) {
+            SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+        } else if (SetProcessDPIAware) {
+            SetProcessDPIAware();
+        }
+
+        if (user32) FreeLibrary(user32);
+        if (shcore) FreeLibrary(shcore);
+    #endif
+}
+
 int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine,
                        int nCmdShow) {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
+
+    MakeDPIAware();
+
     mainthreadid = GetCurrentThreadId();
     HMODULE kernel32 = GetModuleHandleA("kernel32.dll");
     if (kernel32) qfpin = (QFPIN)GetProcAddress(kernel32, "QueryFullProcessImageNameW");
