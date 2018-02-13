@@ -13,3 +13,5 @@ ipch/
 /ProcrastiTracker_Setup.exe
 
 *.db
+
+*.opendb

@@ -58,11 +58,13 @@ inline void swap(T &a, T &b) {
 
 template <typename T>
 struct SlabAllocated {
+    #ifndef _DEBUG
     void *operator new(size_t size) {
         assert(size == sizeof(T));
         return pool.alloc(size);
     }
     void operator delete(void *p) { pool.dealloc(p, sizeof(T)); };
+    #endif
 };
 
 // from boost, stops a class from being accidental victim to default copy + destruct twice problem
@@ -377,7 +379,6 @@ class Hashtable : public NonCopyable {
         return cur;
     }
 
-    protected:
     chain *insert(char *key, unsigned int h) {
         chain *c = new chain;
         c->key = key;
@@ -398,17 +399,28 @@ class Hashtable : public NonCopyable {
     }
 };
 
-struct Nothing {};  // FIXME: this still has a sizeof() of 1, thus costs 8 bytes extra
-struct StringPool : public Hashtable<Nothing> {
-    StringPool() : Hashtable(16) {}
+struct StringPool {
+    struct Nothing {};  // FIXME: this still has a sizeof() of 1, thus costs 8 bytes extra
+    Hashtable<Nothing> ht;
+    StringPool() : ht(16) {}
 
     char *add(char *s) {
         unsigned int h;
-        chain *c = find(s, h);
+        auto c = ht.find(s, h);
         if (c) return c->key;
         s = pool.alloc_string(s);
-        insert(s, h);
+        ht.insert(s, h);
         return s;
+    }
+
+    void clear() {
+        ht.resetiter();
+        while (ht.validiter()) {
+            pool.dealloc_string(ht.citer->key);
+            ht.citer = ht.citer->next;
+            ht.advanceiter();
+        }
+        ht.clear(false);
     }
 };
 

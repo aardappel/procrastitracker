@@ -1,5 +1,5 @@
 #ifdef _DEBUG
-//#define PASSTHRUALLOC
+    #define PASSTHRUALLOC
 #endif
 
 struct DLNode {
