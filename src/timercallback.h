@@ -16,7 +16,27 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
         threadrestarthook();
     }
 
+	bool foregroundFullscreen = false;
+	HWND h = GetForegroundWindow();
+	if (h) {
+		HWND hDesktop = GetDesktopWindow();
+		if (!(h == hDesktop || h == GetShellWindow())) { // foreground isn't desktop or shell
+			RECT fgRect, deskRect;
+			GetWindowRect(h, &fgRect);
+			GetWindowRect(hDesktop, &deskRect);
+			if (fgRect.bottom == deskRect.bottom
+				&& fgRect.top == deskRect.top
+				&& fgRect.left == deskRect.left
+				&& fgRect.right == deskRect.right) {
+				foregroundFullscreen = true;
+			}
+		}
+	}
+
     DWORD idletime = (dwTime - inputhookinactivity()) / 1000;  // same here
+	if (foregroundFullscreen) {
+		idletime = 0; // we are never idle when we are interacting with fullscreen content
+	}
     if (idletime > prefs[PREF_IDLE].ival) {
         if (!changesmade)
             // save one last time while idle, don't keep saving db while
@@ -33,7 +53,7 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
     *title = 0;
     char url[MAXTMPSTR];
     *url = 0;
-    HWND h = GetForegroundWindow();
+    
     if (h) {
         DWORD procids[] = {0, 0};
         GetWindowThreadProcessId(h, procids);
