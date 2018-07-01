@@ -16,27 +16,31 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
         threadrestarthook();
     }
 
-	bool foregroundFullscreen = false;
-	HWND h = GetForegroundWindow();
-	if (h) {
-		HWND hDesktop = GetDesktopWindow();
-		if (!(h == hDesktop || h == GetShellWindow())) { // foreground isn't desktop or shell
-			RECT fgRect, deskRect;
-			GetWindowRect(h, &fgRect);
-			GetWindowRect(hDesktop, &deskRect);
-			if (fgRect.bottom == deskRect.bottom
-				&& fgRect.top == deskRect.top
-				&& fgRect.left == deskRect.left
-				&& fgRect.right == deskRect.right) {
-				foregroundFullscreen = true;
-			}
-		}
-	}
+    bool foregroundfullscreen = false;
+    HWND h = GetForegroundWindow();
+
+    // Fix to full-screen foreground windows triggering idle
+    // For example: video games played with a controller, movies / presentations / videos played fullscreen, etc
+    // Checks if foreground window is the same size as primary monitor
+    if (h) {
+        HWND hdesktop = GetDesktopWindow();
+        if (!(h == hdesktop || h == GetShellWindow())) { // foreground isn't desktop or shell
+            RECT fgrect, deskrect;
+            GetWindowRect(h, &fgrect);
+            GetWindowRect(hdesktop, &deskrect);
+            if (fgrect.bottom == deskrect.bottom
+                && fgrect.top == deskrect.top
+                && fgrect.left == deskrect.left
+                && fgrect.right == deskrect.right) {
+                foregroundfullscreen = true;
+            }
+        }
+    }
 
     DWORD idletime = (dwTime - inputhookinactivity()) / 1000;  // same here
-	if (foregroundFullscreen) {
-		idletime = 0; // we are never idle when we are interacting with fullscreen content
-	}
+    if (foregroundfullscreen) {
+        idletime = 0; // we are never idle when we are interacting with fullscreen content
+    }
     if (idletime > prefs[PREF_IDLE].ival) {
         if (!changesmade)
             // save one last time while idle, don't keep saving db while
@@ -89,9 +93,9 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
             for (char *p = exename; *p; p++) *p = tolower(*p);
             CloseHandle(ph);
         }
-		if (strcmp(exename, "lockapp") == 0) {
-			return;
-		}
+        if (strcmp(exename, "lockapp") == 0) {
+            return;
+        }
         if (strcmp(exename, "firefox") == 0 || strcmp(exename, "iexplore") == 0 ||
             strcmp(exename, "chrome") == 0 || strcmp(exename, "opera") == 0 ||
             strcmp(exename, "netscape") == 0 || strcmp(exename, "netscape6") == 0 ||
