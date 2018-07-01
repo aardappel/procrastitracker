@@ -89,6 +89,9 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
             for (char *p = exename; *p; p++) *p = tolower(*p);
             CloseHandle(ph);
         }
+		if (strcmp(exename, "lockapp") == 0) {
+			return;
+		}
         if (strcmp(exename, "firefox") == 0 || strcmp(exename, "iexplore") == 0 ||
             strcmp(exename, "chrome") == 0 || strcmp(exename, "opera") == 0 ||
             strcmp(exename, "netscape") == 0 || strcmp(exename, "netscape6") == 0 ||
