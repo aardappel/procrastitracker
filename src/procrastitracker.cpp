@@ -60,7 +60,7 @@ tag tags[MAXTAGS] = {
     {"project 8", 0xB0B0B0, NULL, NULL},
 };
 
-const int FILE_FORMAT_VERSION = 10;
+const int FILE_FORMAT_VERSION = 11;
 
 extern char databasemain[];
 extern char databaseback[];
@@ -131,6 +131,8 @@ enum {
     PREF_AUTOSAVE,
     PREF_CULL,
     PREF_AWAY,
+    PREF_XINPUT,
+    PREF_FOREGROUNDFULLSCREEN,
     NUM_PREFS
 };  // new entries need to bump fileformat
 
@@ -139,7 +141,8 @@ numeditbox minfilter = {NULL, 0, 0, 60 * 24, IDC_EDIT2};
 DWORD timer_sample_val = 0;  // May be different from PREF_SAMPLE since timer doesn't get reset.
 numeditbox prefs[NUM_PREFS] = {{NULL, 5, 1, 60, IDC_EDIT1},     {NULL, 180, 5, 3600, IDC_EDIT3},
                                {NULL, 10, 5, 60, IDC_EDIT4},    {NULL, 10, 1, 60, IDC_EDIT5},
-                               {NULL, 300, 0, 3600, IDC_EDIT6}, {NULL, 0, 0, 9999, IDC_EDIT7}};
+                               {NULL, 300, 0, 3600, IDC_EDIT6}, {NULL, 0, 0, 9999, IDC_EDIT7},
+                               {NULL, 0, 0, 1, IDC_CHECK1, true}, {NULL, 1, 0, 1, IDC_CHECK2, true}};
 
 int statnodes = 0, statdays = 0, statht = 0, statleaf = 0, statone = 0;
 char filterstrcontents[100] = "";

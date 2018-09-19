@@ -74,11 +74,15 @@ void load(node *root, char *fn, bool merge) {
                 minfilter.ival = rint(f) / 60;
             // FF: int foldlevel
             foldlevel = rint(f);
-            ASSERT(NUM_PREFS == 6);
+            ASSERT(NUM_PREFS == 8);
             if (version >= 6) {
                 // FF: int prefs[6] (see advanced prefs window)
                 loop(i, 5) prefs[i].ival = rint(f);
                 if (version >= 10) prefs[5].ival = rint(f);
+                if (version >= 11) {
+                    prefs[6].ival = rint(f);
+                    prefs[7].ival = rint(f);
+                }
             }
         }
         if (version == 8) loop(i, 24) gzgetc_s(f);
