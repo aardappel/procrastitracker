@@ -43,6 +43,7 @@
 #include <shlobj.h>
 #include <shlwapi.h>
 #include <oleacc.h>
+#include <Xinput.h>
 
 // C RunTime Header Files
 #include <stdlib.h>
@@ -60,5 +61,7 @@
 #include "zlib.h"
 
 const int MAXTMPSTR = 1000;
+
+const int MAXCTRLS = 3; // XInput controller indexes are 0-3
 
 // TODO: reference additional headers your program requires here

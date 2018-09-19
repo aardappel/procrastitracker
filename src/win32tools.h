@@ -15,20 +15,31 @@ struct numeditbox {
     DWORD ival;
     DWORD min, max;
     int itemconst;
+    bool check = false;
 
     void seteditbox(HWND w) {
-        char aval[100];
-        sprintf(aval, "%d", ival);
-        h = ::seteditbox(w, itemconst, aval);
+        if (check) {
+            h = w; 
+            CheckDlgButton(w, itemconst, ival == 0 ? BST_UNCHECKED : BST_CHECKED);
+        }
+        else {
+            char aval[100];
+            sprintf(aval, "%d", ival);
+            h = ::seteditbox(w, itemconst, aval);
+        }
     }
     bool handleeditbox(int item) {
         char aval[100] = "";
         if (item != itemconst) return false;
         int val = ival;
-        getcontroltext(h, aval, sizeof(aval));
-        if (!aval[0])
-            return false;  // this shouldn't be needed? why is this called upon window init?
-        ival = atoi(aval);
+        if (check) {
+            ival = IsDlgButtonChecked(h, itemconst) == BST_CHECKED;
+        } else {
+            getcontroltext(h, aval, sizeof(aval));
+            if (!aval[0])
+                return false;  // this shouldn't be needed? why is this called upon window init?
+            ival = atoi(aval);
+        }
         if (ival == val) return false;
         if (ival < min) ival = min;
         if (ival > max) ival = max;
