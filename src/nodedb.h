@@ -74,14 +74,19 @@ void load(node *root, char *fn, bool merge) {
                 minfilter.ival = rint(f) / 60;
             // FF: int foldlevel
             foldlevel = rint(f);
-            ASSERT(NUM_PREFS == 8);
+            ASSERT(NUM_PREFS == 9);
             if (version >= 6) {
                 // FF: int prefs[6] (see advanced prefs window)
                 loop(i, 5) prefs[i].ival = rint(f);
                 if (version >= 10) prefs[5].ival = rint(f);
                 if (version >= 11) {
-                    prefs[6].ival = rint(f);
-                    prefs[7].ival = rint(f);
+                    if (version >= 12) {
+                        prefs[PREF_XINPUTACTIVITYFREQUENCY].ival = rint(f);
+                        prefs[PREF_XINPUTACTIVITY].ival = rint(f);
+                    } else {
+                        rint(f); // throw away the "Xbox controller connected" preference if set in version 11
+                    }
+                    prefs[PREF_FOREGROUNDFULLSCREEN].ival = rint(f);
                 }
             }
         }
