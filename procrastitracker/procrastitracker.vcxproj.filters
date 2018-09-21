@@ -75,6 +75,9 @@
     <ClInclude Include="resource.h">
       <Filter>resources</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\xinputactivity.h">
+      <Filter>app\win32</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\stdafx.cpp">

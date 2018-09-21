@@ -116,6 +116,7 @@
     <ClInclude Include="..\src\tools.h" />
     <ClInclude Include="..\src\win32tools.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="..\src\xinputactivity.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\IdleTracker.cpp">
