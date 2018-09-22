@@ -90,7 +90,7 @@ BEGIN
     LTEXT           "Cull on Load (Seconds)",IDC_STATIC,7,61,111,9
     LTEXT           "Show dialog when away less than (Minutes)",IDC_STATIC,7,74,148,9
     EDITTEXT        IDC_EDIT7,161,72,49,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Not idle if foreground fullscreen application detected",IDC_CHECK_FULLGROUNDFULLSCREEN,
+    CONTROL         "Not idle if foreground fullscreen application detected",IDC_CHECK_FOREGROUNDFULLSCREEN,
                     "Button",BS_AUTOCHECKBOX | BS_LEFTTEXT | BS_LEFT | WS_TABSTOP,7,109,203,10
     CONTROL         "Not idle if Xbox Controller activity detected",IDC_CHECK_XINPUTACTIVITY,
                     "Button",BS_AUTOCHECKBOX | BS_LEFTTEXT | BS_LEFT | WS_TABSTOP,7,98,203,10

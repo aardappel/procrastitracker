@@ -58,7 +58,7 @@
 #define IDC_COMBO1                      1039
 #define IDC_STATIC1                     1040
 #define IDC_CHECK2                      1041
-#define IDC_CHECK_FULLGROUNDFULLSCREEN  1041
+#define IDC_CHECK_FOREGROUNDFULLSCREEN  1041
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

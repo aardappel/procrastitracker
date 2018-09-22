@@ -145,7 +145,7 @@ numeditbox prefs[NUM_PREFS] = {{NULL, 5, 1, 60, IDC_EDIT1},     {NULL, 180, 5, 3
                                {NULL, 300, 0, 3600, IDC_EDIT6}, {NULL, 0, 0, 9999, IDC_EDIT7},
                                {NULL, 5, 1, 60, IDC_EDIT_XINPUTACTIVITY_FREQUENCY}, 
                                {NULL, 0, 0, 1, IDC_CHECK_XINPUTACTIVITY, true},
-                               {NULL, 1, 0, 1, IDC_CHECK_FULLGROUNDFULLSCREEN, true} };
+                               {NULL, 1, 0, 1, IDC_CHECK_FOREGROUNDFULLSCREEN, true} };
 
 int statnodes = 0, statdays = 0, statht = 0, statleaf = 0, statone = 0;
 char filterstrcontents[100] = "";
