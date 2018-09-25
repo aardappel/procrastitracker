@@ -22,7 +22,7 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
     // For example: video games played with a controller, movies / presentations / videos played fullscreen, etc
     // Checks if foreground window is the same size as primary monitor
     bool foregroundfullscreen = false;
-    if (h && prefs[PREF_FOREGROUNDFULLSCREEN].ival) {
+    if (h) {
         HWND hdesktop = GetDesktopWindow();
         if (!(h == hdesktop || h == GetShellWindow())) { // foreground isn't desktop or shell
             RECT fgrect, deskrect;
@@ -37,25 +37,24 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
         }
     }
 
-    // For people with a wireless Xbox controller who want the option,
-    // use a connected controller as an indicator that the user is not idle
-    // (For gaming in windowed mode with a controller where foregroundfullscreen check fails)
-    bool controllerconnected = false;
-    if (prefs[PREF_XINPUT].ival) {
-        XINPUT_STATE tmp;
-        for (int i = 0; i < MAXCTRLS; i++) {
-            if (XInputGetState(i, &tmp) == ERROR_SUCCESS) {
-                controllerconnected = true;
-                break;
-            }
+
+    bool controllerconnected = iscontrollerconnected();
+    
+    DWORD last_activity = inputhookinactivity();
+
+    if (controllerconnected && prefs[PREF_XINPUTACTIVITY].ival) {
+        start_xinput_activity_timer();
+        if (g_dwLastXInputTick > last_activity) {
+            last_activity = g_dwLastXInputTick;
         }
+    } else {
+        stop_xinput_activity_timer();
     }
     
+    DWORD idletime = (dwTime - last_activity) / 1000;  // same here
 
-    DWORD idletime = (dwTime - inputhookinactivity()) / 1000;  // same here
-    if (foregroundfullscreen || controllerconnected) {
-        // we are never idle when we are interacting with fullscreen content
-        // or when a controller is connected
+    if (foregroundfullscreen && prefs[PREF_FOREGROUNDFULLSCREEN].ival) {
+        // break idle if conditions are met and user prefs want it
         idletime = 0; 
     }
     if (idletime > prefs[PREF_IDLE].ival) {

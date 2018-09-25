@@ -60,7 +60,7 @@ tag tags[MAXTAGS] = {
     {"project 8", 0xB0B0B0, NULL, NULL},
 };
 
-const int FILE_FORMAT_VERSION = 11;
+const int FILE_FORMAT_VERSION = 12;
 
 extern char databasemain[];
 extern char databaseback[];
@@ -131,7 +131,8 @@ enum {
     PREF_AUTOSAVE,
     PREF_CULL,
     PREF_AWAY,
-    PREF_XINPUT,
+    PREF_XINPUTACTIVITYFREQUENCY,
+    PREF_XINPUTACTIVITY,
     PREF_FOREGROUNDFULLSCREEN,
     NUM_PREFS
 };  // new entries need to bump fileformat
@@ -142,7 +143,9 @@ DWORD timer_sample_val = 0;  // May be different from PREF_SAMPLE since timer do
 numeditbox prefs[NUM_PREFS] = {{NULL, 5, 1, 60, IDC_EDIT1},     {NULL, 180, 5, 3600, IDC_EDIT3},
                                {NULL, 10, 5, 60, IDC_EDIT4},    {NULL, 10, 1, 60, IDC_EDIT5},
                                {NULL, 300, 0, 3600, IDC_EDIT6}, {NULL, 0, 0, 9999, IDC_EDIT7},
-                               {NULL, 0, 0, 1, IDC_CHECK1, true}, {NULL, 1, 0, 1, IDC_CHECK2, true}};
+                               {NULL, 5, 1, 60, IDC_EDIT_XINPUTACTIVITY_FREQUENCY}, 
+                               {NULL, 0, 0, 1, IDC_CHECK_XINPUTACTIVITY, true},
+                               {NULL, 1, 0, 1, IDC_CHECK_FOREGROUNDFULLSCREEN, true} };
 
 int statnodes = 0, statdays = 0, statht = 0, statleaf = 0, statone = 0;
 char filterstrcontents[100] = "";
@@ -182,11 +185,12 @@ node *prevselectednode = NULL;
 const int bmsize = 16;
 const int daygraphwidth = 200;
 
+#include "away.h"
+#include "xinputactivity.h"
 #include "timercallback.h"
 #include "statview.h"
 #include "prefview.h"
 #include "regview.h"
-#include "away.h"
 
 INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
     UNREFERENCED_PARAMETER(lParam);
