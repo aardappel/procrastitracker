@@ -102,7 +102,8 @@ void load(node *root, char *fn, bool merge) {
 void exporthtml(char *fn) {
     FILE *f = fopen(fn, "w");
     if (f) {
-        fprintf(f, "<HTML><HEAD><TITLE>Procrastitracker export</TITLE></HEAD><BODY>");
+        fprintf(f, "<!DOCTYPE html><HTML><HEAD><meta charset=\"utf-8\"/>"
+                   "<TITLE>Procrastitracker export</TITLE></HEAD><BODY>");
         root->print(f, true);
         fprintf(f, "</BODY></HTML>");
         fclose(f);
