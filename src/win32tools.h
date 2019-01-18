@@ -6,7 +6,10 @@ HWND seteditbox(HWND w, int itemconst, char *aval) {
 }
 
 void getcontroltext(HWND h, char *aval, int len) {
-    GetWindowTextA(h, aval, len);
+    wchar_t tmp[MAXTMPSTR];
+    GetWindowTextW(h, tmp, MAXTMPSTR);
+    tmp[MAXTMPSTR - 1] = 0;
+    WideCharToMultiByte(CP_UTF8, 0, tmp, -1, aval, len, NULL, NULL);
     aval[len - 1] = 0;
 }
 
