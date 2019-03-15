@@ -64,7 +64,7 @@ struct daydata {
         int hrs = mins / 60;
         mins -= hrs * 60;
         if (hrs || timelevel > 1) s.FormatCat("%d:", hrs);
-        if (mins || timelevel > 0) s.FormatCat("%02d:", mins);
+        if (hrs || mins || timelevel > 0) s.FormatCat("%02d:", mins);
         s.FormatCat("%02d", secs);
     }
 
