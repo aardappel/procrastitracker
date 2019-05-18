@@ -124,7 +124,16 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
                     // Chrome doesn't support DDE, get last url change from it:
                     strncpy(url, current_chrome_url, MAXTMPSTR);
                 }
+
                 // FIXME: Edge doesn't support DDE either, but currently no known workaround.
+
+                // FIXME: And Firefox stopped supporting it as well:
+                // https://bugzilla.mozilla.org/show_bug.cgi?id=1373212
+                // It may be possible to use the "UI Automation" API to retrieve it?
+                // https://stackoverflow.com/questions/20798935/how-can-i-get-the-url-from-running-instance-of-firefox-and-chrome-web-browser-in
+                // Example of usage here:
+                // https://code.msdn.microsoft.com/Windows-7-UI-Automation-9131f729
+                // Also see WinEventProc in ddeutil.h
             }
             char *http = strstr(url, "://");
             if (!http) {

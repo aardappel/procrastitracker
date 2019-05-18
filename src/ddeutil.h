@@ -46,6 +46,9 @@ void ddereq(char *server, char *topic, char *item, char *buf, int len) {
 // https://bugs.chromium.org/p/chromium/issues/detail?id=70184
 // http://stackoverflow.com/questions/21010017/how-to-get-current-url-for-chrome-current-version
 
+// Firefox:
+// https://wiki.mozilla.org/Accessibility/AT-Windows-API
+
 HWINEVENTHOOK LHook = 0;
 char current_chrome_url[MAXTMPSTR] = {0};
 
@@ -59,7 +62,9 @@ void CALLBACK WinEventProc
     char classname[MAXTMPSTR];
     GetClassName(hwnd, classname, MAXTMPSTR);
     classname[MAXTMPSTR - 1] = 0;
-    if (strcmp(classname, "Chrome_WidgetWin_1")) return;  // Early out.
+    auto is_chrome = strcmp(classname, "Chrome_WidgetWin_1") != 0;
+    auto is_firefox = strcmp(classname, "MozillaWindowClass") != 0;
+    if (!is_chrome /* && !is_firefox */) return;  // Early out.
     IAccessible *pAcc = NULL;
     VARIANT varChild;
     HRESULT hr = AccessibleObjectFromEvent(hwnd, idObject, idChild, &pAcc, &varChild);
@@ -67,6 +72,12 @@ void CALLBACK WinEventProc
         BSTR bstrName, bstrValue;
         pAcc->get_accValue(varChild, &bstrValue);
         pAcc->get_accName(varChild, &bstrName);
+        #ifdef TEST_FIREFOX
+            OutputDebugStringW(bstrName);
+            OutputDebugStringA(" = ");
+            OutputDebugStringW(bstrValue);
+            OutputDebugStringA("\n");
+        #endif
         if (bstrName && bstrValue && !wcscmp(bstrName, L"Address and search bar")) {
             WideCharToMultiByte(CP_UTF8, 0, bstrValue, -1, current_chrome_url, MAXTMPSTR, NULL,
                                 NULL);
