@@ -34,17 +34,26 @@ INT_PTR CALLBACK Away(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 }
 
 // this one runs on the main thread
-void CreateAwayDialog(DWORD awaysecs) {
-    if (awaydialog)
-        EndDialog(awaydialog,
-                  IDC_BUTTON8);  // if the user hadn't responded to the previous dialog, kill it
-    awaysecsdialog = awaysecs;
-    awaydialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_AWAYDIALOG), mainhwnd, Away);
-    if (awaydialog) {
-        SetWindowPos(mainhwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-    } else {
-        DWORD err = GetLastError();
-        printf("CreateDialog failed: %d\n", err);
+void TrackAwayTime(DWORD awaysecs) {
+    DWORD awaymins = awaysecs / 60;
+    if (awaymins < prefs[PREF_AWAYAUTO].ival) {
+        SYSTEMTIME st;
+        GetLocalTime(&st);
+        char buf[100] = "Away : Other";
+        addtodatabase(buf, st, 0, awaysecs);
+    } else if (awaymins < prefs[PREF_AWAY].ival) {
+        if (awaydialog) {
+            // if the user hadn't responded to the previous dialog, kill it
+            EndDialog(awaydialog, IDC_BUTTON8);
+        }
+        awaysecsdialog = awaysecs;
+        awaydialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_AWAYDIALOG), mainhwnd, Away);
+        if (awaydialog) {
+            SetWindowPos(mainhwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+        } else {
+            DWORD err = GetLastError();
+            printf("CreateDialog failed: %d\n", err);
+        }
     }
 }
 
@@ -52,10 +61,14 @@ void CreateAwayDialog(DWORD awaysecs) {
 void CheckAway(DWORD lasttime, DWORD curtime) {
     DWORD awaysecs = (curtime - lasttime) / 1000;
     DWORD awaymins = awaysecs / 60;
-    // accessing prefs here is theoretically also thread-unsafe
-    if (awaysecs > prefs[PREF_IDLE].ival &&  // we're waking up from an idle period
-        awaymins < prefs[PREF_AWAY].ival) {  // we actually want to track this (i.e. not a night)
-        if (!PostMessage(mainhwnd, WM_APP + 1, 0, awaysecs))
-            OutputDebugStringA("posting WM_APP failed\n");
+    // Accessing prefs here is theoretically also thread-unsafe.
+    // If we're waking up from an idle period:
+    if (awaysecs > prefs[PREF_IDLE].ival) {
+        // If we actually want to track this (i.e. not a night).
+        if (awaymins < prefs[PREF_AWAY].ival ||
+            awaymins < prefs[PREF_AWAYAUTO].ival) {
+            if (!PostMessage(mainhwnd, WM_APP + 1, 0, awaysecs))
+                OutputDebugStringA("posting WM_APP failed\n");
+        }
     }
 }

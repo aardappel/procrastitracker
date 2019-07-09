@@ -74,7 +74,7 @@ void load(node *root, char *fn, bool merge) {
                 minfilter.ival = rint(f) / 60;
             // FF: int foldlevel
             foldlevel = rint(f);
-            ASSERT(NUM_PREFS == 9);
+            ASSERT(NUM_PREFS == 10);
             if (version >= 6) {
                 // FF: int prefs[6] (see advanced prefs window)
                 loop(i, 5) prefs[i].ival = rint(f);
@@ -87,6 +87,9 @@ void load(node *root, char *fn, bool merge) {
                         rint(f); // throw away the "Xbox controller connected" preference if set in version 11
                     }
                     prefs[PREF_FOREGROUNDFULLSCREEN].ival = rint(f);
+                }
+                if (version >= 13) {
+                    prefs[PREF_AWAYAUTO].ival = rint(f);
                 }
             }
         }

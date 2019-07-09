@@ -52,6 +52,7 @@
 #define IDC_EDIT9                       1034
 #define IDC_EDIT_XINPUTACTIVITY_FREQUENCY 1034
 #define IDC_BUTTON2                     1035
+#define IDC_EDIT10                      1035
 #define IDC_LIST1                       1036
 #define IDC_STATICHO                    1037
 #define IDC_BUTTON3                     1038
