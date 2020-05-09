@@ -220,7 +220,7 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 
 UINT WM_TASKBARCREATED = 0;
 
-bool CreateTaskBarIcon(HWND hWnd, DWORD action) {
+bool CreateTaskBarIcon(HWND hWnd, DWORD action, int repeats) {
     NOTIFYICONDATA nid;
     ZeroMemory(&nid, sizeof(NOTIFYICONDATA));
     nid.cbSize = sizeof(NOTIFYICONDATA);
@@ -229,7 +229,7 @@ bool CreateTaskBarIcon(HWND hWnd, DWORD action) {
     nid.uCallbackMessage = WM_USER + 1;
     nid.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_PROCRASTITRACKER));
     strcpy(nid.szTip, "procrastitracker (active)");  // max 64 chars
-    loop(i, action == NIM_DELETE ? 2 : 60) {
+    loop(i, repeats) {
         if (Shell_NotifyIcon(action, &nid)) return true;
         Sleep(1000);
     }
@@ -368,7 +368,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 // See:
                 // http://twigstechtips.blogspot.com/2011/02/c-detect-when-windows-explorer-has.html
                 Sleep(3000);  // Apparently if we re-create it too quickly, it will fail.
-                if (!CreateTaskBarIcon(hWnd, NIM_ADD)) warn("PT: Cannot recreate task bar icon");
+                // First try modify, since apparently we can get WM_TASKBARCREATED even
+                // if the icon wasn't actually destroyed.
+                if (!CreateTaskBarIcon(hWnd, NIM_MODIFY, 3) &&
+                    !CreateTaskBarIcon(hWnd, NIM_ADD, 10)) warn("PT: Cannot recreate task bar icon");
             }
             return DefWindowProc(hWnd, message, wParam, lParam);
     }
@@ -456,7 +459,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     if (!mainhwnd) panic("PT: Cannot create main window");
     if ((WM_TASKBARCREATED = RegisterWindowMessage(TEXT("TaskbarCreated"))) == 0)
         panic("PT: Cannot register TaskbarCreated message");
-    if (!CreateTaskBarIcon(mainhwnd, NIM_ADD)) panic("PT: Cannot create task bar icon");
+    if (!CreateTaskBarIcon(mainhwnd, NIM_ADD, 10)) panic("PT: Cannot create task bar icon");
     ShowWindow(mainhwnd, SW_HIDE /*nCmdShow*/);
     UpdateWindow(mainhwnd);
     if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, databaseroot))) {
@@ -493,7 +496,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     }
     killhookthread();
     save();
-    CreateTaskBarIcon(mainhwnd, NIM_DELETE);
+    CreateTaskBarIcon(mainhwnd, NIM_DELETE, 3);
     ddeclean();
     eventhookclean();
     #ifdef _DEBUG
