@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.0
+    - name: build ProcrastiTracker
+      run: |
+        msbuild.exe procrastitracker\procrastitracker.sln /p:Configuration=Release /p:Platform=Win32
+        Remove-Item PT\*.ipdb
+        Remove-Item PT\*.iobj
+    - name: Create installer
+      uses: joncloud/makensis-action@v2.0
+      with:
+        script-file: "pt.nsi"
+        arguments: "/V3"
+    - name: upload build artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: ProcrastiTracker (installer)
+        path: ProcrastiTracker_Setup.exe
