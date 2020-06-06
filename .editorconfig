@@ -1,0 +1,8 @@
+
+[*]
+trim_trailing_whitespace = true
+guidelines = 100
+
+[*.{cpp,h}]
+indent_style = space
+indent_size = 4

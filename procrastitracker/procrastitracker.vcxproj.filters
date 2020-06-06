@@ -164,6 +164,7 @@
     <None Include="rt_manif.bin">
       <Filter>resources</Filter>
     </None>
+    <None Include="..\.editorconfig" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\src\TODO.txt">
