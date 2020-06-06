@@ -45,6 +45,7 @@ void ddereq(char *server, char *topic, char *item, char *buf, int len) {
 // Chrome still doesn't support DDE, so we use this kludgey code instead to get the current URL.
 // https://bugs.chromium.org/p/chromium/issues/detail?id=70184
 // http://stackoverflow.com/questions/21010017/how-to-get-current-url-for-chrome-current-version
+// Newer: https://stackoverflow.com/questions/48504300/get-active-tab-url-in-chrome-with-c
 
 // Firefox:
 // https://wiki.mozilla.org/Accessibility/AT-Windows-API
@@ -64,7 +65,15 @@ void CALLBACK WinEventProc
     classname[MAXTMPSTR - 1] = 0;
     auto is_chrome = strcmp(classname, "Chrome_WidgetWin_1") != 0;
     auto is_firefox = strcmp(classname, "MozillaWindowClass") != 0;
-    if (!is_chrome /* && !is_firefox */) return;  // Early out.
+    if (!is_chrome /* && !is_firefox */) {
+        //OutputDebugStringA("NOT CHROME\n");
+        return;  // Early out.
+    }
+
+    #if 1
+
+    // This way of doing thing doesn't appear to work anymore.
+
     IAccessible *pAcc = NULL;
     VARIANT varChild;
     HRESULT hr = AccessibleObjectFromEvent(hwnd, idObject, idChild, &pAcc, &varChild);
@@ -80,11 +89,80 @@ void CALLBACK WinEventProc
         #endif
         if (bstrName && bstrValue && !wcscmp(bstrName, L"Address and search bar")) {
             WideCharToMultiByte(CP_UTF8, 0, bstrValue, -1, current_chrome_url, MAXTMPSTR, NULL,
-                                NULL);
+                NULL);
             current_chrome_url[MAXTMPSTR - 1] = 0;
+            //OutputDebugStringA("Got URL:");
+            //OutputDebugStringA(current_chrome_url);
+            //OutputDebugStringA("\n");
+        } else {
+            //OutputDebugStringA("Address and search bar fail: \"");
+            //OutputDebugStringW(bstrName);
+            //OutputDebugStringA("\" - \"");
+            //OutputDebugStringW(bstrValue);
+            //OutputDebugStringA("\"\n");
         }
         pAcc->Release();
+    } else {
+        //OutputDebugStringA("AccessibleObjectFromEvent fail\n");
     }
+
+    #else
+
+    // New way: https://stackoverflow.com/questions/48504300/get-active-tab-url-in-chrome-with-c
+    // This doesn't work either.. the URL is always empty.
+    // And spams OLEAUT "Library not registered" errors.
+
+    for (;;) {
+        CComQIPtr<IUIAutomation> uia;
+        if (FAILED(uia.CoCreateInstance(CLSID_CUIAutomation)) || !uia) {
+            //OutputDebugStringA("CoCreateInstance fail\n");
+            break;
+        }
+
+        CComPtr<IUIAutomationElement> root;
+        if (FAILED(uia->ElementFromHandle(hwnd, &root)) || !root) {
+            //OutputDebugStringA("ElementFromHandle fail\n");
+            break;
+        }
+
+        CComPtr<IUIAutomationCondition> condition;
+
+        //URL's id is 0xC354, or use UIA_EditControlTypeId for 1st edit box
+        if (FAILED(uia->CreatePropertyCondition(UIA_ControlTypePropertyId,
+            CComVariant(0xC354), &condition))) {
+            //OutputDebugStringA("CreatePropertyCondition fail\n");
+            break;
+        }
+
+        //or use edit control's name instead
+        //uia->CreatePropertyCondition(UIA_NamePropertyId,
+        //      CComVariant(L"Address and search bar"), &condition);
+
+        CComPtr<IUIAutomationElement> edit;
+        if (FAILED(root->FindFirst(TreeScope_Descendants, condition, &edit))
+            || !edit) {
+            //OutputDebugStringA("FindFirst fail\n");
+            break;
+            continue; //maybe we don't have the right tab, continue...
+        }
+
+        CComVariant url;
+        if (FAILED(edit->GetCurrentPropertyValue(UIA_ValueValuePropertyId, &url))) {
+            //OutputDebugStringA("GetCurrentPropertyValue fail\n");
+            break;
+        }
+
+        WideCharToMultiByte(CP_UTF8, 0, url.bstrVal, -1, current_chrome_url, MAXTMPSTR, NULL,
+            NULL);
+        current_chrome_url[MAXTMPSTR - 1] = 0;
+        OutputDebugStringA("Got URL:");
+        OutputDebugStringA(current_chrome_url);
+        OutputDebugStringA("\n");
+
+        break;
+    }
+
+    #endif
 }
 
 void eventhookinit() {

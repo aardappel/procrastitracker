@@ -11,14 +11,15 @@
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
 #include <crtdbg.h>
-#ifdef _DEBUG
+//#define TRACK_LEAKS
+#if defined(_DEBUG) && defined(TRACK_LEAKS)
     #define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
     #define new DEBUG_NEW
 #endif
 
 // Allow use of features specific to Windows Vista or later.
-#ifndef WINVER				
-#define WINVER _WIN32_WINNT_VISTA                  		
+#ifndef WINVER
+#define WINVER _WIN32_WINNT_VISTA
 #endif
 
 #ifndef _WIN32_WINNT
@@ -39,6 +40,11 @@
 #include <shlwapi.h>
 #include <oleacc.h>
 #include <Xinput.h>
+
+// For URL-getting hack in DDEUtil
+//#include <AtlBase.h>
+//#include <AtlCom.h>
+//#include <UIAutomation.h>
 
 // C RunTime Header Files
 #include <stdlib.h>
