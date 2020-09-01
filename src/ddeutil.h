@@ -64,7 +64,7 @@ void CALLBACK WinEventProc
     GetClassName(hwnd, classname, MAXTMPSTR);
     classname[MAXTMPSTR - 1] = 0;
     auto is_chrome = strcmp(classname, "Chrome_WidgetWin_1") != 0;
-    auto is_firefox = strcmp(classname, "MozillaWindowClass") != 0;
+    //auto is_firefox = strcmp(classname, "MozillaWindowClass") != 0;
     if (!is_chrome /* && !is_firefox */) {
         //OutputDebugStringA("NOT CHROME\n");
         return;  // Early out.
@@ -73,6 +73,7 @@ void CALLBACK WinEventProc
     #if 1
 
     // This way of doing thing doesn't appear to work anymore.
+    // NOTE: now disabled below.
 
     IAccessible *pAcc = NULL;
     VARIANT varChild;
@@ -166,6 +167,9 @@ void CALLBACK WinEventProc
 }
 
 void eventhookinit() {
+    // None of this code seems to work anymore, so don't run it.
+    return;
+
     if (LHook != 0) return;
     CoInitialize(NULL);
     LHook = SetWinEventHook(EVENT_OBJECT_FOCUS, EVENT_OBJECT_VALUECHANGE, 0, WinEventProc, 0, 0,
@@ -173,6 +177,8 @@ void eventhookinit() {
 }
 
 void eventhookclean() {
+    return;
+
     if (LHook == 0) return;
     UnhookWinEvent(LHook);
     CoUninitialize();
