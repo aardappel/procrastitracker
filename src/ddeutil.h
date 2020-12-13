@@ -80,6 +80,8 @@ void CALLBACK WinEventProc
     HRESULT hr = AccessibleObjectFromEvent(hwnd, idObject, idChild, &pAcc, &varChild);
     if ((hr == S_OK) && (pAcc != NULL)) {
         BSTR bstrName, bstrValue;
+        // FIXME: These calls, on some system, can cause message pump blocking?? which blocks
+        // the entire app.
         pAcc->get_accValue(varChild, &bstrValue);
         pAcc->get_accName(varChild, &bstrName);
         #ifdef TEST_FIREFOX
