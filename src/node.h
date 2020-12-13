@@ -167,7 +167,7 @@ struct node : SlabAllocated<node> {
     }
 
     void save(gzFile f, bool filtered) {
-        gzwrite(f, nname, (int)strlen(nname) + 1);
+        gzwrite_s(f, nname, (int)strlen(nname) + 1);
         wint(f, tag);
         gzputc(f, hidden);
         if (filtered) {

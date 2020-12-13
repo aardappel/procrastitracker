@@ -109,7 +109,11 @@ int gzgetc_s(gzFile f) {
     return c;
 }
 
-void wint(gzFile f, int i) { gzwrite(f, &i, sizeof(int)); }
+void gzwrite_s(gzFile file, voidpc buf, unsigned len) {
+    if (len != gzwrite(file, buf, len)) panic("PT: write failed while writing database to disk");
+}
+
+void wint(gzFile f, int i) { gzwrite_s(f, &i, sizeof(int)); }
 
 int rint(gzFile f) {
     int i;

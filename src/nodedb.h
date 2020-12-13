@@ -7,14 +7,14 @@ void save(bool filtered = false, char *givenfilename = NULL) {
     wint(f, 'PTFF');
     wint(f, MAXTAGS);
     loop(i, MAXTAGS) {
-        gzwrite(f, tags[i].name, sizeof(tags[i].name));
+        gzwrite_s(f, tags[i].name, sizeof(tags[i].name));
         wint(f, tags[i].color);
     }
     wint(f, minfilter.ival * 60);
     wint(f, foldlevel);
     loop(i, NUM_PREFS) wint(f, prefs[i].ival);
     root->save(f, filtered);
-    gzclose(f);
+    if (gzclose(f) != Z_OK) panic("PT: could not finish writing database file");
     if (!givenfilename) {
         lastsavetime = GetTickCount();
         // only delete previous backups if we have a database

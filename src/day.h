@@ -93,7 +93,7 @@ struct daydata {
         return seconds;
     }
 
-    void save(gzFile f) { gzwrite(f, this, sizeof(daydata)); }
+    void save(gzFile f) { gzwrite_s(f, this, sizeof(daydata)); }
     void load(gzFile f, int version) {
         // FF: struct DAY {
         if (version < 5) {
