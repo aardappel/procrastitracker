@@ -36,6 +36,45 @@ void save(bool filtered = false, char *givenfilename = NULL) {
     }
 }
 
+// NOTE: this function should only overwrite globals it gets by argument, see callers.
+void loadglobals(gzFile f, int version, numeditbox *prefs, tag *tags, numeditbox &minfilter,
+                 DWORD &foldlevel) {
+    // FF: int numtags
+    int ntags = rint(f);
+    if (ntags > MAXTAGS) panic("PT: wrong number of tags in file");
+    loop(i, ntags) {
+        // FF: struct { char name[32]; int color; } tags[numtags]
+        gzread_s(f, tags[i].name, sizeof(tags[i].name));
+        int col = rint(f);
+        tags[i].color = col;
+    }
+    // FF: int minfilter
+    if (version < 6) {
+        loop(i, 10) gzgetc_s(f);
+    } else
+        minfilter.ival = rint(f) / 60;
+    // FF: int foldlevel
+    foldlevel = rint(f);
+    ASSERT(NUM_PREFS == 10);
+    if (version >= 6) {
+        // FF: int prefs[6] (see advanced prefs window)
+        loop(i, 5) prefs[i].ival = rint(f);
+        if (version >= 10) prefs[5].ival = rint(f);
+        if (version >= 11) {
+            if (version >= 12) {
+                prefs[PREF_XINPUTACTIVITYFREQUENCY].ival = rint(f);
+                prefs[PREF_XINPUTACTIVITY].ival = rint(f);
+            } else {
+                rint(f);  // throw away the "Xbox controller connected" preference if set in version
+                          // 11
+            }
+            prefs[PREF_FOREGROUNDFULLSCREEN].ival = rint(f);
+        }
+        if (version >= 13) { prefs[PREF_AWAYAUTO].ival = rint(f); }
+    }
+}
+
+
 void load(node *root, char *fn, bool merge) {
     // FF: struct DATABASE {
     gzFile f = gzopen(fn, "rb");
@@ -46,52 +85,15 @@ void load(node *root, char *fn, bool merge) {
     // FF: int magic (== 'PTFF' on x86)
     if (version >= 6 && rint(f) != 'PTFF') panic("PT: not a PT database file");
     if (version >= 4) {
-        // don't overwrite global data
         if (merge) {
-            int ntags = rint(f);
-            uint bytes = ntags * (sizeof(tag().name) + sizeof(int));  // tags
-            bytes += version < 6 ? 10 : sizeof(int);                  // minfilter
-            bytes += sizeof(int);                                     // foldlevel
-            if (version >= 6) {                                       // prefs
-                bytes += 5 * sizeof(int);
-                if (version >= 10) bytes += sizeof(int);
-            }
-            loop(i, (int)bytes) gzgetc_s(f);
+            // don't overwrite global data
+            numeditbox _prefs[NUM_PREFS];
+            tag _tags[MAXTAGS];
+            numeditbox _minfilter;
+            DWORD _foldlevel;
+            loadglobals(f, version, _prefs, _tags, _minfilter, _foldlevel);
         } else {
-            // FF: int numtags
-            int ntags = rint(f);
-            if (ntags > MAXTAGS) panic("PT: wrong number of tags in file");
-            loop(i, ntags) {
-                // FF: struct { char name[32]; int color; } tags[numtags]
-                gzread_s(f, tags[i].name, sizeof(tags[i].name));
-                int col = rint(f);
-                tags[i].color = col;
-            }
-            // FF: int minfilter
-            if (version < 6) {
-                loop(i, 10) gzgetc_s(f);
-            } else
-                minfilter.ival = rint(f) / 60;
-            // FF: int foldlevel
-            foldlevel = rint(f);
-            ASSERT(NUM_PREFS == 10);
-            if (version >= 6) {
-                // FF: int prefs[6] (see advanced prefs window)
-                loop(i, 5) prefs[i].ival = rint(f);
-                if (version >= 10) prefs[5].ival = rint(f);
-                if (version >= 11) {
-                    if (version >= 12) {
-                        prefs[PREF_XINPUTACTIVITYFREQUENCY].ival = rint(f);
-                        prefs[PREF_XINPUTACTIVITY].ival = rint(f);
-                    } else {
-                        rint(f); // throw away the "Xbox controller connected" preference if set in version 11
-                    }
-                    prefs[PREF_FOREGROUNDFULLSCREEN].ival = rint(f);
-                }
-                if (version >= 13) {
-                    prefs[PREF_AWAYAUTO].ival = rint(f);
-                }
-            }
+            loadglobals(f, version, prefs, tags, minfilter, foldlevel);
         }
         if (version == 8) loop(i, 24) gzgetc_s(f);
     }

@@ -92,9 +92,12 @@ bool inputhooksetup() {  // WINVER = 0x0501 for Windows XP, it needs non-NULL hI
     #else
         #define hInst NULL
     #endif
-    if (!g_hHkKeyboardLL)
-        g_hHkKeyboardLL = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardTracker, hInst, 0);
-    if (!g_hHkMouseLL) g_hHkMouseLL = SetWindowsHookEx(WH_MOUSE_LL, MouseTracker, hInst, 0);
+    #ifndef _DEBUG  // If we're debugging, this hook slows debugging down!
+        if (!g_hHkKeyboardLL)
+            g_hHkKeyboardLL = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardTracker, hInst, 0);
+        if (!g_hHkMouseLL)
+            g_hHkMouseLL = SetWindowsHookEx(WH_MOUSE_LL, MouseTracker, hInst, 0);
+    #endif
     g_dwLastTick = GetTickCount();
     return g_hHkKeyboardLL && g_hHkMouseLL;
 }
