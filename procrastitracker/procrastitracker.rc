@@ -44,7 +44,7 @@ BEGIN
     LTEXT           "ProcrastiTracker Version Mmm 00 0000",IDC_STATIC1,8,4,133,8,SS_NOPREFIX
     LTEXT           "by Wouter van Oortmerssen",IDC_STATIC,8,13,101,8
     DEFPUSHBUTTON   "OK",IDOK,8,33,30,11,WS_GROUP
-    LTEXT           "http://procrastitracker.com/",IDC_STATIC,8,22,101,8
+    LTEXT           "http://strlen.com/procrastitracker/",IDC_STATIC,8,22,130,8
 END
 
 IDD_PROPPAGE_LARGE DIALOGEX 0, 0, 541, 380
