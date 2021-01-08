@@ -74,6 +74,10 @@ Section "ProcrastiTracker (required)"
   
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ProcrastiTracker" "DisplayName" "ProcrastiTracker"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ProcrastiTracker" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ProcrastiTracker" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ProcrastiTracker" "Publisher" "Wouter van Oortmerssen"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ProcrastiTracker" "DisplayIcon" "$\"$INSTDIR\procrastitracker.exe$\""
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ProcrastiTracker" "InstallLocation" "$INSTDIR"
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ProcrastiTracker" "NoModify" 1
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ProcrastiTracker" "NoRepair" 1
   WriteUninstaller "uninstall.exe"
