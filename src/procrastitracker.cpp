@@ -17,7 +17,7 @@ StringPool strpool;
 
 DWORD mainthreadid = 0;
 
-void warn(char *what) { MessageBoxA(NULL, what, "procrastitracker", MB_OK); }
+void warn(char *what) { MessageBoxA(NULL, what, "ttracker", MB_OK); }
 
 void panic(char *what) {
     warn(what);
@@ -110,7 +110,7 @@ int gzgetc_s(gzFile f) {
 }
 
 void gzwrite_s(gzFile file, voidpc buf, unsigned len) {
-    if (len != gzwrite(file, buf, len)) panic("PT: write failed while writing database to disk");
+    if (len != gzwrite(file, buf, len)) panic("TT: write failed while writing database to disk");
 }
 
 void wint(gzFile f, int i) { gzwrite_s(f, &i, sizeof(int)); }
@@ -232,7 +232,7 @@ bool CreateTaskBarIcon(HWND hWnd, DWORD action, int repeats) {
     nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     nid.uCallbackMessage = WM_USER + 1;
     nid.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_PROCRASTITRACKER));
-    strcpy(nid.szTip, "procrastitracker (active)");  // max 64 chars
+    strcpy(nid.szTip, "ttracker (active)");  // max 64 chars
     loop(i, repeats) {
         if (Shell_NotifyIcon(action, &nid)) return true;
         Sleep(1000);
@@ -273,12 +273,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     DialogBox(hInst, MAKEINTRESOURCE(IDD_PROPPAGE_MEDIUM), hWnd, Prefs);
                     break;
                 case 'AB': DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About); break;
-                case 'EX': DestroyWindow(hWnd); break;
+                case 'EX':
+                    save();
+                    DestroyWindow(hWnd);
+                    break;
                 case 'EH': {
                     recompaccum();
                     char requestfilename[1000];
                     if (FileRequest(hWnd, requestfilename, sizeof(requestfilename),
-                                    "procrastitracker_report.html",
+                                    "ttracker_report.html",
                                     "HTML Files\0*.html;*.htm\0All Files\0*.*\0\0",
                                     "Save Exported HTML File As..."))
                         exporthtml(requestfilename);
@@ -375,7 +378,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 // First try modify, since apparently we can get WM_TASKBARCREATED even
                 // if the icon wasn't actually destroyed.
                 if (!CreateTaskBarIcon(hWnd, NIM_MODIFY, 3) &&
-                    !CreateTaskBarIcon(hWnd, NIM_ADD, 10)) warn("PT: Cannot recreate task bar icon");
+                    !CreateTaskBarIcon(hWnd, NIM_ADD, 10)) warn("TT: Cannot recreate task bar icon");
             }
             return DefWindowProc(hWnd, message, wParam, lParam);
     }
@@ -420,6 +423,9 @@ void MakeDPIAware() {
     #endif
 }
 
+#define TT_WND_CLASS_NAME "TITRACKER"
+
+
 int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine,
                        int nCmdShow) {
     UNREFERENCED_PARAMETER(hPrevInstance);
@@ -437,8 +443,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                                     ICC_STANDARD_CLASSES | ICC_TREEVIEW_CLASSES |
                                     ICC_USEREX_CLASSES | ICC_WIN95_CLASSES};
     InitCommonControlsEx(&icc);
-    if (FindWindowA("PROCRASTITRACKER", NULL)) panic("ProcrastiTracker already running");
-    if (!ddeinit()) panic("PT: Cannot initialize DDE");
+    if (FindWindowA(TT_WND_CLASS_NAME, NULL)) panic("TTracker already running");
+    if (!ddeinit()) panic("TT: Cannot initialize DDE");
     // This is for chrome only:
     eventhookinit();
     WNDCLASSEX wcex;
@@ -452,18 +458,18 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
     wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wcex.lpszMenuName = NULL;  // MAKEINTRESOURCE(IDC_PROCRASTITRACKER);
-    wcex.lpszClassName = "PROCRASTITRACKER";
+    wcex.lpszClassName = TT_WND_CLASS_NAME;
     wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_PROCRASTITRACKER));
     RegisterClassEx(&wcex);
     hInst = hInstance;
     whitebrush = CreateSolidBrush(0xFFFFFF);
     greybrush = CreateSolidBrush(0xb99d7f);
-    mainhwnd = CreateWindow("PROCRASTITRACKER", "procrastitracker", WS_OVERLAPPEDWINDOW,
+    mainhwnd = CreateWindow(TT_WND_CLASS_NAME, "ttracker", WS_OVERLAPPEDWINDOW,
                             CW_USEDEFAULT, 0, 300, 150, NULL, NULL, hInstance, NULL);
-    if (!mainhwnd) panic("PT: Cannot create main window");
+    if (!mainhwnd) panic("TT: Cannot create main window");
     if ((WM_TASKBARCREATED = RegisterWindowMessage(TEXT("TaskbarCreated"))) == 0)
-        panic("PT: Cannot register TaskbarCreated message");
-    if (!CreateTaskBarIcon(mainhwnd, NIM_ADD, 10)) panic("PT: Cannot create task bar icon");
+        panic("TT: Cannot register TaskbarCreated message");
+    if (!CreateTaskBarIcon(mainhwnd, NIM_ADD, 10)) panic("TT: Cannot create task bar icon");
     ShowWindow(mainhwnd, SW_HIDE /*nCmdShow*/);
     UpdateWindow(mainhwnd);
     if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, databaseroot))) {
@@ -472,14 +478,14 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
         // should not happen, but if it does, databases will just end up in current dir
         databaseroot[0] = 0;
     }
-    PathAppend(databaseroot, "procrastitrackerdbs\\");
+    PathAppend(databaseroot, "ttrackerdbs\\");
     SHCreateDirectoryEx(NULL, databaseroot, NULL);
     strcpy(databasemain, databaseroot);
     strcpy(databaseback, databaseroot);
     strcpy(databasetemp, databaseroot);
-    PathAppend(databasemain, "db.PT");
-    PathAppend(databaseback, "db_BACKUP.PT");
-    PathAppend(databasetemp, "db_TEMP.~PT");
+    PathAppend(databasemain, "db.TT");
+    PathAppend(databaseback, "db_BACKUP.TT");
+    PathAppend(databasetemp, "db_TEMP.~TT");
     starttime = now();
     endtime = now();
     load(root, databasemain, false);
