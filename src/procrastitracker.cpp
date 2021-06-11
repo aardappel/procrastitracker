@@ -371,11 +371,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             if (message == WM_TASKBARCREATED) { // explorer has restarted
                 // See:
                 // http://twigstechtips.blogspot.com/2011/02/c-detect-when-windows-explorer-has.html
-                Sleep(3000);  // Apparently if we re-create it too quickly, it will fail.
+                Sleep(10000);  // Apparently if we re-create it too quickly, it will fail.
                 // First try modify, since apparently we can get WM_TASKBARCREATED even
                 // if the icon wasn't actually destroyed.
                 if (!CreateTaskBarIcon(hWnd, NIM_MODIFY, 3) &&
-                    !CreateTaskBarIcon(hWnd, NIM_ADD, 10)) warn("PT: Cannot recreate task bar icon");
+                    !CreateTaskBarIcon(hWnd, NIM_ADD, 10)) {
+                    // This can still fail repeatedly under certain conditions in fullscreen
+                    // games, causing annoying popups, so let's no warn at all.
+                    //warn("PT: Cannot recreate task bar icon");
+                }
             }
             return DefWindowProc(hWnd, message, wParam, lParam);
     }
