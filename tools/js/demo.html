@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, serif; font-size: 1em; background: #e7e7e7; }
+    pre { padding: 20px; overflow: auto; color: #f2f2f2; text-shadow: none; background: #303030; }
+    .renderjson a { text-decoration: none; }
+    .renderjson .disclosure { color: crimson; font-size: 150%; }
+    .renderjson .syntax { color: grey; }
+    .renderjson .string { color: red; }
+    .renderjson .number { color: cyan; }
+    .renderjson .boolean { color: plum; }
+    .renderjson .key { color: lightblue; }
+    .renderjson .keyword { color: lightgoldenrodyellow; }
+    .renderjson .object.syntax { color: lightseagreen; }
+    .renderjson .array.syntax { color: lightsalmon; }
+  </style>
+</head>
+
+<body>
+  <h2>Demo - Loading PT database file</h2>
+  <span>Load a <b>PT</b> file</span>
+  <input type="file" id="file-input"/>
+  <div id="output"></div>
+
+  <script src="lib/zlib_and_gzip.v0.3.min.js"></script>
+  <script src="lib/renderjson.js"></script>
+  <script src="procrastitracker.js"></script>
+  <script>
+    var fileInput = document.getElementById("file-input");
+    fileInput.addEventListener('change', function () {
+      // reset output
+      var output = document.getElementById("output");
+      while (output.hasChildNodes()) {
+        output.removeChild(output.lastChild);
+      }
+      if (fileInput.files.length == 0) {
+        output.appendChild( document.createTextNode("No file is selected") );
+        return;
+      };
+      var fr = new FileReader();
+      fr.onerror = function (evt) {
+        console.err("FileReader on error")
+        console.err(evt);
+        output.appendChild( document.createTextNode(evt) );
+      };
+      fr.onload = function (evt) {
+        console.log("FileReader on loaded")
+        console.log(evt);
+        // load / decompress / shoe
+        try
+        {
+          var compressed = new Zlib.Gunzip(new Uint8Array(evt.target.result));
+          var decompressed = compressed.decompress();
+          var json = PROCRASTITRACKER.load_db(decompressed);
+          var parsed_datetime = PROCRASTITRACKER.parse_datetime(json);
+          var parsed_path = PROCRASTITRACKER.parse_path(json);
+          output.appendChild( renderjson.set_show_to_level(2)(json) );
+          output.appendChild( renderjson.set_show_to_level(0)(parsed_datetime) );
+          output.appendChild( renderjson.set_show_to_level(0)(parsed_path) );
+        }
+        catch (e)
+        {
+          output.appendChild( document.createTextNode(e) );
+        }
+      };
+      var f = fileInput.files[0];
+      console.log("File selected { name: \"" + f.name + "\", size: " + f.size + " }");
+      fr.readAsArrayBuffer(fileInput.files[0]);
+    });
+  </script>
+</body>
+
+</html>
