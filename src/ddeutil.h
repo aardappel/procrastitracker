@@ -63,7 +63,7 @@ void CALLBACK WinEventProc
     char classname[MAXTMPSTR];
     GetClassName(hwnd, classname, MAXTMPSTR);
     classname[MAXTMPSTR - 1] = 0;
-    auto is_chrome = strcmp(classname, "Chrome_WidgetWin_1") == 0;
+    auto is_chrome = strcmp(classname, "Chrome_WidgetWin_1") == 0;  // This can also be MS Edge
     //auto is_firefox = strcmp(classname, "MozillaWindowClass") == 0;
     if (!is_chrome /* && !is_firefox */) {
         //OutputDebugStringA("NOT CHROME\n");
