@@ -53,6 +53,20 @@ void ddereq(char *server, char *topic, char *item, char *buf, int len) {
 HWINEVENTHOOK LHook = 0;
 char current_chrome_url[MAXTMPSTR] = {0};
 
+#define DEBUG_URL 0
+
+void DebugURL(const char* msg) {
+    #if DEBUG_URL
+    OutputDebugStringA(msg);
+    #endif
+}
+
+void DebugURL(LPCWSTR msg) {
+    #if DEBUG_URL
+        OutputDebugStringW(msg);
+    #endif
+}
+
 #ifdef MINGW32_BUG
 void WinEventProc
 #else
@@ -60,20 +74,29 @@ void CALLBACK WinEventProc
 #endif
     (HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild,
      DWORD dwEventThread, DWORD dwmsEventTime) {
+    if (!hwnd) {
+        DebugURL("NULL HWND\n");
+        return;
+    }
     char classname[MAXTMPSTR];
-    GetClassName(hwnd, classname, MAXTMPSTR);
+    if (!GetClassName(hwnd, classname, MAXTMPSTR)) {
+        DebugURL("GetClassName FAIL\n");
+        return;
+    }
     classname[MAXTMPSTR - 1] = 0;
+    DebugURL("GetClassName: ");
+    DebugURL(classname);
+    DebugURL("\n");
+
+    // Getting "HwndWrapper[DefaultDomain;;$UID]" now?
     auto is_chrome = strcmp(classname, "Chrome_WidgetWin_1") == 0;  // This can also be MS Edge
     //auto is_firefox = strcmp(classname, "MozillaWindowClass") == 0;
     if (!is_chrome /* && !is_firefox */) {
-        //OutputDebugStringA("NOT CHROME\n");
+        DebugURL("NOT CHROME/EDGE\n");
         return;  // Early out.
     }
 
     #if 1
-
-    // This way of doing thing doesn't appear to work anymore.
-    // NOTE: now disabled below.
 
     IAccessible *pAcc = NULL;
     VARIANT varChild;
@@ -84,47 +107,41 @@ void CALLBACK WinEventProc
         // the entire app.
         pAcc->get_accValue(varChild, &bstrValue);
         pAcc->get_accName(varChild, &bstrName);
-        #ifdef TEST_FIREFOX
-            OutputDebugStringW(bstrName);
-            OutputDebugStringA(" = ");
-            OutputDebugStringW(bstrValue);
-            OutputDebugStringA("\n");
-        #endif
+        DebugURL(bstrName);
+        DebugURL(" = ");
+        DebugURL(bstrValue);
+        DebugURL("\n");
         if (bstrName && bstrValue && !wcscmp(bstrName, L"Address and search bar")) {
             WideCharToMultiByte(CP_UTF8, 0, bstrValue, -1, current_chrome_url, MAXTMPSTR, NULL,
                 NULL);
             current_chrome_url[MAXTMPSTR - 1] = 0;
-            //OutputDebugStringA("Got URL:");
-            //OutputDebugStringA(current_chrome_url);
-            //OutputDebugStringA("\n");
+            DebugURL("Got URL:");
+            DebugURL(current_chrome_url);
+            DebugURL("\n");
         } else {
-            //OutputDebugStringA("Address and search bar fail: \"");
-            //OutputDebugStringW(bstrName);
-            //OutputDebugStringA("\" - \"");
-            //OutputDebugStringW(bstrValue);
-            //OutputDebugStringA("\"\n");
+            DebugURL("Address and search bar fail\n");
         }
         pAcc->Release();
     } else {
-        //OutputDebugStringA("AccessibleObjectFromEvent fail\n");
+        DebugURL("AccessibleObjectFromEvent fail\n");
     }
 
     #else
 
     // New way: https://stackoverflow.com/questions/48504300/get-active-tab-url-in-chrome-with-c
-    // This doesn't work either.. the URL is always empty.
+    // This doesn't work .. the URL is always empty.
     // And spams OLEAUT "Library not registered" errors.
 
     for (;;) {
         CComQIPtr<IUIAutomation> uia;
         if (FAILED(uia.CoCreateInstance(CLSID_CUIAutomation)) || !uia) {
-            //OutputDebugStringA("CoCreateInstance fail\n");
+            DebugURL("CoCreateInstance fail\n");
             break;
         }
 
         CComPtr<IUIAutomationElement> root;
         if (FAILED(uia->ElementFromHandle(hwnd, &root)) || !root) {
-            //OutputDebugStringA("ElementFromHandle fail\n");
+            DebugURL("ElementFromHandle fail\n");
             break;
         }
 
@@ -133,7 +150,7 @@ void CALLBACK WinEventProc
         //URL's id is 0xC354, or use UIA_EditControlTypeId for 1st edit box
         if (FAILED(uia->CreatePropertyCondition(UIA_ControlTypePropertyId,
             CComVariant(0xC354), &condition))) {
-            //OutputDebugStringA("CreatePropertyCondition fail\n");
+            DebugURL("CreatePropertyCondition fail\n");
             break;
         }
 
@@ -144,23 +161,23 @@ void CALLBACK WinEventProc
         CComPtr<IUIAutomationElement> edit;
         if (FAILED(root->FindFirst(TreeScope_Descendants, condition, &edit))
             || !edit) {
-            //OutputDebugStringA("FindFirst fail\n");
+            DebugURL("FindFirst fail\n");
             break;
             continue; //maybe we don't have the right tab, continue...
         }
 
         CComVariant url;
         if (FAILED(edit->GetCurrentPropertyValue(UIA_ValueValuePropertyId, &url))) {
-            //OutputDebugStringA("GetCurrentPropertyValue fail\n");
+            DebugURL("GetCurrentPropertyValue fail\n");
             break;
         }
 
         WideCharToMultiByte(CP_UTF8, 0, url.bstrVal, -1, current_chrome_url, MAXTMPSTR, NULL,
             NULL);
         current_chrome_url[MAXTMPSTR - 1] = 0;
-        OutputDebugStringA("Got URL:");
-        OutputDebugStringA(current_chrome_url);
-        OutputDebugStringA("\n");
+        DebugURL("Got URL:");
+        DebugURL(current_chrome_url);
+        DebugURL("\n");
 
         break;
     }
