@@ -115,12 +115,12 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
         if (strcmp(exename, "firefox") == 0 || strcmp(exename, "iexplore") == 0 ||
             strcmp(exename, "chrome") == 0 || strcmp(exename, "opera") == 0 ||
             strcmp(exename, "netscape") == 0 || strcmp(exename, "netscape6") == 0 ||
-            strcmp(exename, "microsoftedge") == 0) {
+            strcmp(exename, "msedge") == 0) {
             // TODO: can we get a UTF-8 URL out of this somehow, if the URL contains percent encoded
             // unicode chars?
             ddereq(exename, "WWW_GetWindowInfo", "0xFFFFFFFF", url, MAXTMPSTR);
             if (!*url) {
-                if (!strcmp(exename, "chrome")) {
+                if (!strcmp(exename, "chrome") || !strcmp(exename, "msedge")) {
                     // Chrome doesn't support DDE, get last url change from it:
                     strncpy(url, current_chrome_url, MAXTMPSTR);
                 }
