@@ -441,7 +441,13 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                                     ICC_STANDARD_CLASSES | ICC_TREEVIEW_CLASSES |
                                     ICC_USEREX_CLASSES | ICC_WIN95_CLASSES};
     InitCommonControlsEx(&icc);
-    if (FindWindowA("PROCRASTITRACKER", NULL)) panic("ProcrastiTracker already running");
+    HWND hWnd = FindWindowA("PROCRASTITRACKER", NULL);
+    if (hWnd) {
+        // show the stats view of the existing instance
+        WPARAM wParam = MAKEWPARAM('ST', 0);
+        SendMessageA(hWnd, WM_COMMAND, wParam, NULL);
+        return 0;
+    }
     if (!ddeinit()) panic("PT: Cannot initialize DDE");
     // This is for chrome only:
     eventhookinit();
