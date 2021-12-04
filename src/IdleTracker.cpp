@@ -65,7 +65,6 @@ LRESULT CALLBACK KeyboardTracker(int code, WPARAM wParam, LPARAM lParam) {
 LRESULT CALLBACK MouseTracker(int code, WPARAM wParam, LPARAM lParam) {
     if (code == HC_ACTION) {
         DWORD curtime = GetTickCount();
-        CheckAway(g_dwLastTick, curtime);
         MSLLHOOKSTRUCT *pStruct = (MSLLHOOKSTRUCT *)lParam;
         switch (wParam) {
             case WM_LBUTTONDOWN: lmb++; break;
@@ -75,6 +74,7 @@ LRESULT CALLBACK MouseTracker(int code, WPARAM wParam, LPARAM lParam) {
         if (pStruct->pt.x != g_mouseLocX || pStruct->pt.y != g_mouseLocY) {
             g_mouseLocX = pStruct->pt.x;
             g_mouseLocY = pStruct->pt.y;
+            CheckAway(g_dwLastTick, curtime);
             g_dwLastTick = curtime;
         }
     }
