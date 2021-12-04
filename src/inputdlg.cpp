@@ -114,7 +114,7 @@ INT_PTR CWin32InputBox::InputBoxEx(WIN32INPUTBOX_PARAM *param) {
     LPDLGTEMPLATE dlgTemplate;
     if (param->DlgTemplateName != 0) {
         HMODULE hModule = (HMODULE)param->hInstance;
-        HRSRC rcDlg = ::FindResource(hModule, MAKEINTRESOURCE(param->DlgTemplateName), RT_DIALOG);
+        HRSRC rcDlg = ::FindResourceA(hModule, param->DlgTemplateName, RT_DIALOG);
         if (rcDlg == NULL) return 0;
         HGLOBAL hglobalDlg = ::LoadResource(hModule, rcDlg);
         if (hglobalDlg == NULL) return 0;

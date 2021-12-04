@@ -29,7 +29,6 @@ QFPIN qfpin = NULL;
 
 DWORD lastsavetime = 0;
 bool changesmade = false;
-DWORD lasttracktime = 0;
 DWORD awaysecsdialog = 0;
 
 DWORD maxsecondsforbargraph = 100000;
@@ -495,7 +494,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     load(root, databasemain, false);
     firstday = starttime;
     lastsavetime = GetTickCount();
-    lasttracktime = GetTickCount();
     #ifdef MINGW32_BUG
     SetTimer(NULL, 0, prefs[PREF_SAMPLE].ival * 1000, timerfunc);
     #else
