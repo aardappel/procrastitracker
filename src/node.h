@@ -421,4 +421,12 @@ struct node : SlabAllocated<node> {
             while (ht->validiter()) ht->nextiter()->checkstrfilter(instrfilter);
         }
     }
+
+    bool changetime(int percentage) {
+        if (percentage < 0 || percentage > 10000) return false;
+        for (lday *d = last; d; d = d->next) {
+            d->seconds = (DWORD)(d->seconds * (percentage / 100.0));
+        }
+        return true;
+    }
 };

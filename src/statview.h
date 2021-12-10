@@ -176,14 +176,13 @@ long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR) {
             if (selectednode && (ctrl & 0x8000)) switch (kd->wVKey) {
                     case 'C': {
                         if (selectednode->last) {
-                            char buf[100] = "";
+                            char buf[100] = "100";
                             CWin32InputBox::InputBox(
                                 "Manual Override",
-                                "Enter new amount of minutes to add to this node", buf, 100, false,
+                                "Enter percentage to scale this node by (100 = no change)", buf, 100, false,
                                 hWndDlg);
-                            int newv = (int)selectednode->last->seconds + atoi(buf) * 60;
-                            selectednode->last->seconds = std::max(newv, 0);
-                            rendertree(hWndDlg, false);
+                            selectednode->changetime(atoi(buf));
+                            rendertree(hWndDlg, true);
                         }
                         return TRUE;
                     }
