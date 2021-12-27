@@ -59,7 +59,7 @@ tag tags[MAXTAGS] = {
     {"project 8", 0xB0B0B0, NULL, NULL},
 };
 
-const int FILE_FORMAT_VERSION = 13;
+const int FILE_FORMAT_VERSION = 14;
 
 extern char databasemain[];
 extern char databaseback[];
@@ -138,6 +138,7 @@ enum {
     PREF_XINPUTACTIVITY,
     PREF_FOREGROUNDFULLSCREEN,
     PREF_AWAYAUTO,
+    PREF_DAYSTART,
     NUM_PREFS
 };  // new entries need to bump fileformat
 
@@ -155,6 +156,7 @@ numeditbox prefs[NUM_PREFS] = {
     {NULL, 0, 0, 1, IDC_CHECK_XINPUTACTIVITY, true},
     {NULL, 1, 0, 1, IDC_CHECK_FOREGROUNDFULLSCREEN, true},
     {NULL, 0, 0, 9999, IDC_EDIT10},
+    {NULL, 0, 0, 23, IDC_EDIT11},
 };
 
 int statnodes = 0, statdays = 0, statht = 0, statleaf = 0, statone = 0;

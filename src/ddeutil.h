@@ -96,6 +96,11 @@ void CALLBACK WinEventProc
         return;  // Early out.
     }
 
+    if (IsDebuggerPresent()) {
+        // Code below e.g. get_accValue seems to misbehave with debugger attached?
+        return;
+    }
+
     #if 1
 
     IAccessible *pAcc = NULL;

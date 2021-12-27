@@ -55,7 +55,7 @@ void loadglobals(gzFile f, int version, numeditbox *prefs, tag *tags, numeditbox
         minfilter.ival = rint(f) / 60;
     // FF: int foldlevel
     foldlevel = rint(f);
-    ASSERT(NUM_PREFS == 10);
+    ASSERT(NUM_PREFS == 11);
     if (version >= 6) {
         // FF: int prefs[6] (see advanced prefs window)
         loop(i, 5) prefs[i].ival = rint(f);
@@ -71,6 +71,7 @@ void loadglobals(gzFile f, int version, numeditbox *prefs, tag *tags, numeditbox
             prefs[PREF_FOREGROUNDFULLSCREEN].ival = rint(f);
         }
         if (version >= 13) { prefs[PREF_AWAYAUTO].ival = rint(f); }
+        if (version >= 14) { prefs[PREF_DAYSTART].ival = rint(f); }
     }
 }
 
@@ -124,6 +125,13 @@ void mergedb(char *fn) {
 
 static char *seperators[] = {" - ", " | ", " : ", " > ", "\\\\", "\\", "//", "/", NULL};
 
+void dumpst(SYSTEMTIME st) {
+    char msg[256];
+    sprintf_s(msg, 256, "time: %04d-%02d-%02d %02d:%02d\n",
+        st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
+    OutputDebugStringA(msg);
+}
+
 void addtodatabase(char *elements, SYSTEMTIME &st, DWORD idletime, DWORD awaysecs) {
     node *n = root;
     for (char *rest = elements, *head; *rest;) {
@@ -154,6 +162,22 @@ void addtodatabase(char *elements, SYSTEMTIME &st, DWORD idletime, DWORD awaysec
             }
             if (*head) n = n->add(head);
         }
+    }
+    if (prefs[PREF_DAYSTART].ival) {
+        // Convert to FILETIME and back, as that is the only way to get
+        // consequtive time, since our own dayordering() has gaps, which
+        // means substracting time wouldn't work.
+        // This produces a time where if your DAYSTART is at 4am, your
+        // day lasts from 4am to 4am, and thus any minute markers recorded
+        // are relative to that, and not the real day. That seems acceptable
+        // for this purpose.
+        //dumpst(st);
+        unsigned long long ft;
+        SystemTimeToFileTime(&st, (FILETIME *)&ft);
+        auto daystart = 10000000ULL * 60ULL * 60ULL * prefs[PREF_DAYSTART].ival;
+        ft -= daystart;
+        FileTimeToSystemTime((FILETIME *)&ft, &st);
+        //dumpst(st);
     }
     n->hit(st, idletime, awaysecs);
 }
