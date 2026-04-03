@@ -40,6 +40,7 @@
 #include <shlwapi.h>
 #include <oleacc.h>
 #include <Xinput.h>
+#include <uiautomation.h>
 
 // For URL-getting hack in DDEUtil
 //#include <AtlBase.h>

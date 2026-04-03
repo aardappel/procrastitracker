@@ -128,6 +128,7 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
         if (!*url) {
             if (!strcmp(exename, "chrome") || !strcmp(exename, "msedge")) {
                 // Chrome doesn't support DDE, get last url change from it:
+                update_url();
                 strncpy(url, current_chrome_url, MAXTMPSTR);
             }
 

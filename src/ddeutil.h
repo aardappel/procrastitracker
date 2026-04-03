@@ -190,11 +190,103 @@ void CALLBACK WinEventProc
     #endif
 }
 
+// Independent UIA based URL getter.
+void update_url() {
+    IUIAutomation* pAutomation = NULL;
+    HRESULT hr = CoCreateInstance(__uuidof(CUIAutomation), NULL, CLSCTX_INPROC_SERVER, __uuidof(IUIAutomation), (void**)&pAutomation);
+
+    if (SUCCEEDED(hr)) {
+        HWND hwnd = GetForegroundWindow(); // Get the currently active window
+
+        // Optional: Check if the active window is actually Chrome
+        char className[256];
+        GetClassNameA(hwnd, className, sizeof(className));
+        if (strcmp(className, "Chrome_WidgetWin_1") == 0) {
+
+            IUIAutomationElement* pRootElement = NULL;
+            hr = pAutomation->ElementFromHandle(hwnd, &pRootElement);
+
+            if (SUCCEEDED(hr) && pRootElement) {
+                // Create a condition to find the Edit control (Address bar)
+                IUIAutomationCondition* pCondition = NULL;
+                VARIANT varProp;
+                varProp.vt = VT_I4;
+                varProp.lVal = UIA_EditControlTypeId;
+                pAutomation->CreatePropertyCondition(UIA_ControlTypePropertyId, varProp, &pCondition);
+
+                // OPTIMIZATION: Create a Cache Request to prevent cross-process lag
+                IUIAutomationCacheRequest* pCacheRequest = NULL;
+                pAutomation->CreateCacheRequest(&pCacheRequest);
+                pCacheRequest->AddPattern(UIA_ValuePatternId);
+                pCacheRequest->AddProperty(UIA_ValueValuePropertyId);
+
+                IUIAutomationElement* pEditElement = NULL;
+                // FindFirst with CacheRequest executes the search in the target process
+                hr = pRootElement->FindFirstBuildCache(TreeScope_Descendants, pCondition, pCacheRequest, &pEditElement);
+
+                if (SUCCEEDED(hr) && pEditElement) {
+                    IUIAutomationValuePattern* pValuePattern = NULL;
+                    // Retrieve from cache (zero cross-process overhead here)
+                    hr = pEditElement->GetCachedPatternAs(UIA_ValuePatternId, __uuidof(IUIAutomationValuePattern), (void**)&pValuePattern);
+
+                    if (SUCCEEDED(hr) && pValuePattern) {
+
+                        BSTR url;
+                        hr = pValuePattern->get_CachedValue(&url);
+
+                        if (SUCCEEDED(hr) && url) {
+
+                            UINT bstrLen = SysStringLen(url);
+                            if (bstrLen > 0) {
+                                // Perform the conversion directly into the fixed-size buffer
+                                WideCharToMultiByte(
+                                    CP_UTF8,                // Convert to UTF-8
+                                    0,                      // Default flags
+                                    url,                    // Source wide string (BSTR)
+                                    bstrLen,                // Length of the source string
+                                    current_chrome_url,     // Destination char buffer
+                                    MAXTMPSTR - 1,          // Max bytes to write (leave 1 byte for null terminator)
+                                    NULL,                   // Must be NULL for CP_UTF8
+                                    NULL                    // Must be NULL for CP_UTF8
+                                );
+
+                                // Guarantee null-termination in case the URL was longer than MAXTMPSTR - 1
+                                current_chrome_url[MAXTMPSTR - 1] = '\0';
+                            }
+
+                            DebugURL("URL (UTF-8): ");
+                            DebugURL(current_chrome_url);
+                            DebugURL("\n");
+
+                            printf("URL: %s\n", current_chrome_url);
+
+                            // Always free the BSTR when done
+                            SysFreeString(url);
+                        }
+
+                        pValuePattern->Release();
+                    }
+                    pEditElement->Release();
+                }
+                if (pCacheRequest) pCacheRequest->Release();
+                if (pCondition) pCondition->Release();
+                pRootElement->Release();
+            }
+        }
+        pAutomation->Release();
+    }
+}
+
 void eventhookinit() {
     if (LHook != 0) return;
     CoInitialize(NULL);
-    LHook = SetWinEventHook(EVENT_OBJECT_FOCUS, EVENT_OBJECT_VALUECHANGE, 0, WinEventProc, 0, 0,
-                            WINEVENT_SKIPOWNPROCESS);
+
+    // We stopped using this EventHook, since it can produce mouselag and is generally expensive.
+    // Instead, the timerfunc now calls update_url() above which is a working version of the UIA code.
+    // Still need CoInitialize.
+    
+    //LHook = SetWinEventHook(EVENT_OBJECT_FOCUS, EVENT_OBJECT_VALUECHANGE, 0, WinEventProc, 0, 0,
+    //                        WINEVENT_SKIPOWNPROCESS);
 }
 
 void eventhookclean() {
