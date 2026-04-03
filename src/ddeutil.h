@@ -207,27 +207,37 @@ void update_url() {
             hr = pAutomation->ElementFromHandle(hwnd, &pRootElement);
 
             if (SUCCEEDED(hr) && pRootElement) {
-                // Create a condition to find the Edit control (Address bar)
-                IUIAutomationCondition* pCondition = NULL;
-                VARIANT varProp;
-                varProp.vt = VT_I4;
-                varProp.lVal = UIA_EditControlTypeId;
-                pAutomation->CreatePropertyCondition(UIA_ControlTypePropertyId, varProp, &pCondition);
+                // 1. Condition: Is an Edit Control
+                IUIAutomationCondition* pEditCondition = NULL;
+                VARIANT varPropEdit;
+                varPropEdit.vt = VT_I4;
+                varPropEdit.lVal = UIA_EditControlTypeId;
+                pAutomation->CreatePropertyCondition(UIA_ControlTypePropertyId, varPropEdit, &pEditCondition);
 
-                // OPTIMIZATION: Create a Cache Request to prevent cross-process lag
+                // 2. Condition: Class Name is "OmniboxViewViews"
+                IUIAutomationCondition* pClassCondition = NULL;
+                VARIANT varPropClass;
+                varPropClass.vt = VT_BSTR;
+                varPropClass.bstrVal = SysAllocString(L"OmniboxViewViews");
+                pAutomation->CreatePropertyCondition(UIA_ClassNamePropertyId, varPropClass, &pClassCondition);
+
+                // 3. Combine conditions: Edit Control AND OmniboxViewViews
+                IUIAutomationCondition* pAndCondition = NULL;
+                pAutomation->CreateAndCondition(pEditCondition, pClassCondition, &pAndCondition);
+
                 IUIAutomationCacheRequest* pCacheRequest = NULL;
                 pAutomation->CreateCacheRequest(&pCacheRequest);
                 pCacheRequest->AddPattern(UIA_ValuePatternId);
                 pCacheRequest->AddProperty(UIA_ValueValuePropertyId);
 
-                IUIAutomationElement* pEditElement = NULL;
-                // FindFirst with CacheRequest executes the search in the target process
-                hr = pRootElement->FindFirstBuildCache(TreeScope_Descendants, pCondition, pCacheRequest, &pEditElement);
+                IUIAutomationElement* pAddressBar = NULL;
+                // Search using the robust AND condition
+                hr = pRootElement->FindFirstBuildCache(TreeScope_Descendants, pAndCondition, pCacheRequest, &pAddressBar);
 
-                if (SUCCEEDED(hr) && pEditElement) {
+                if (SUCCEEDED(hr) && pAddressBar) {
                     IUIAutomationValuePattern* pValuePattern = NULL;
                     // Retrieve from cache (zero cross-process overhead here)
-                    hr = pEditElement->GetCachedPatternAs(UIA_ValuePatternId, __uuidof(IUIAutomationValuePattern), (void**)&pValuePattern);
+                    hr = pAddressBar->GetCachedPatternAs(UIA_ValuePatternId, __uuidof(IUIAutomationValuePattern), (void**)&pValuePattern);
 
                     if (SUCCEEDED(hr) && pValuePattern) {
 
@@ -243,7 +253,7 @@ void update_url() {
                                     CP_UTF8,                // Convert to UTF-8
                                     0,                      // Default flags
                                     url,                    // Source wide string (BSTR)
-                                    bstrLen,                // Length of the source string
+                                    bstrLen + 1,            // Length of the source string + terminator (to have output terminated)
                                     current_chrome_url,     // Destination char buffer
                                     MAXTMPSTR - 1,          // Max bytes to write (leave 1 byte for null terminator)
                                     NULL,                   // Must be NULL for CP_UTF8
@@ -258,7 +268,7 @@ void update_url() {
                             DebugURL(current_chrome_url);
                             DebugURL("\n");
 
-                            printf("URL: %s\n", current_chrome_url);
+                            //printf("URL: %s\n", current_chrome_url);
 
                             // Always free the BSTR when done
                             SysFreeString(url);
@@ -266,10 +276,10 @@ void update_url() {
 
                         pValuePattern->Release();
                     }
-                    pEditElement->Release();
+                    pAddressBar->Release();
                 }
                 if (pCacheRequest) pCacheRequest->Release();
-                if (pCondition) pCondition->Release();
+                if (pAndCondition) pAndCondition->Release();
                 pRootElement->Release();
             }
         }
