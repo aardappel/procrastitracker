@@ -457,8 +457,10 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
                                     starttime = endtime;
                                     break;  //"Yesterday");
                                 case 2:
+                                    // On a Monday this deliberately goes back a whole week.
                                     starttime = dayoffset(
-                                        endtime, -((st.wDayOfWeek == 1 ? 8 : st.wDayOfWeek) - 1));
+                                        endtime,
+                                        -(st.wDayOfWeek == 1 ? 7 : (st.wDayOfWeek + 6) % 7));
                                     break;  //"Since Monday Morning");
                                 case 3:
                                     starttime = dayoffset(endtime, -6);
