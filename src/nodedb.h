@@ -121,6 +121,9 @@ void mergedb(char *fn) {
     load(dbr, fn, true);
     root->merge(*dbr);
     delete dbr;
+    // Loading lowers starttime to the oldest day in the file, which for a merged in
+    // database may well predate everything we had so far.
+    if (starttime < firstday) firstday = starttime;
 }
 
 static char *seperators[] = {" - ", " | ", " : ", " > ", "\\\\", "\\", "//", "/", NULL};
