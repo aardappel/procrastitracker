@@ -250,7 +250,7 @@ BOOL FileRequest(HWND hWnd, char *requestfilename, size_t reqlen, char *defaultn
     ofn.lpstrFile = requestfilename;
     ofn.nMaxFile = reqlen;
     ofn.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_ENABLESIZING | OFN_PATHMUSTEXIST |
-                (doexport ? 0 : OFN_FILEMUSTEXIST) | (multi ? 0 : OFN_ALLOWMULTISELECT);
+                (doexport ? 0 : OFN_FILEMUSTEXIST) | (multi ? OFN_ALLOWMULTISELECT : 0);
     ofn.hwndOwner = hWnd;
     ofn.lpstrFilter = exts;
     ofn.lpstrTitle = title;
@@ -300,7 +300,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     if (FileRequest(hWnd, requestfilename, sizeof(requestfilename),
                                     "db_fromothercomputer.PT",
                                     "ProcrastiTracker Database Files\0*.PT\0All Files\0*.*\0\0",
-                                    "Merge Database File Into Current Database...")) {
+                                    "Merge Database File Into Current Database...", false, true)) {
                         String dir(requestfilename);
                         char *it = requestfilename + dir.Len() + 1;
                         if (!*it) {  // Single filename.
