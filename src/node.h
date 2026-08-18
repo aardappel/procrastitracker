@@ -341,7 +341,7 @@ struct node : SlabAllocated<node> {
             (HTREEITEM)SendDlgItemMessageW(hWnd, IDC_TREE1, TVM_INSERTITEMW, 0, (LPARAM)&tvinsert);
         if (onechild) {
             onechild->treeview(depth + 1, hWnd, thisone, TVI_LAST);
-        } else if (ht) {
+        } else if (ht && ht->numelems) {
             Vector<node *> v;
             ht->getelements(v);
             v.sort((void *)nodesorter);
