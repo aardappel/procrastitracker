@@ -268,6 +268,8 @@ long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR) {
             break;
         }
         case LVN_ENDLABELEDIT: {
+            // pszText is NULL when the user cancelled the edit rather than confirming it.
+            if (!((NMLVDISPINFO *)pNMHDR)->item.pszText) break;
             int sel = SendMessage(taglist, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
             if (sel < 0) break;
             getcontroltext(taglistedit, tags[sel].name, sizeof(tags[sel].name));
