@@ -361,6 +361,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 ShowWindow(hWnd, SW_HIDE);
                 return 0;
             }
+            return DefWindowProc(hWnd, message, wParam, lParam);
         // Fix from Alexandra Kalicinska: save the database before terminating
         // the program due to user logout or system reboot or system shutdown
         // (the GetMessage() loop in _tWinMain() does not get the signal;
