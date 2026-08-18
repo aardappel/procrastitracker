@@ -147,7 +147,7 @@ struct node : SlabAllocated<node> {
                         fprintf(f, "<tr><td align=right valign=top><strong>%s</strong></td><td>",
                                 s.c_str());
                         v[i]->print(f, filtered);
-                        fprintf(f, "</tr></td>\n");
+                        fprintf(f, "</td></tr>\n");
                     }
                 }
                 fprintf(f, "</table>\n");
