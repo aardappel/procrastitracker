@@ -66,6 +66,12 @@ struct node : SlabAllocated<node> {
         return n;
     }
 
+    bool isancestorof(node *n) {
+        for (; n; n = n->parent)
+            if (n == this) return true;
+        return false;
+    }
+
     void clearhidden() {
         hidden = false;
         if (onechild)

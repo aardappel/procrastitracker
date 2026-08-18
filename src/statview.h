@@ -212,7 +212,10 @@ long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR) {
                             if (prevselectednode) {
                                 prevselectednode = prevselectednode->firstinchain();
                                 selectednode = selectednode->firstinchain();
-                                if (prevselectednode != selectednode && prevselectednode->parent) {
+                                // Merging into a node below the one that gets removed would
+                                // throw away the merged data along with it.
+                                if (prevselectednode != selectednode && prevselectednode->parent &&
+                                    !prevselectednode->isancestorof(selectednode)) {
                                     selectednode->merge(*prevselectednode);
                                     prevselectednode->parent->remove(prevselectednode);
                                     selectednode = prevselectednode = NULL;
