@@ -6,14 +6,19 @@ typedef TV_KEYDOWN NMTVKEYDOWN, *LPNMTVKEYDOWN;
 // previous Windows versions used name TV_KEYDOWN, as MinGW does
 #endif
 
+const int barbmwidth = 1920;  // FIXME, screensize
+const int barbmheight = 64;
+
 void setbar(int tag, HDC hdc) {
     HBITMAP &bm = tags[tag].barbm;
     if (!bm) {
         if (!bitmapdc) bitmapdc = CreateCompatibleDC(hdc);
-        bm = CreateCompatibleBitmap(hdc, 1920, 64);
+        bm = CreateCompatibleBitmap(hdc, barbmwidth, barbmheight);
         SelectObject(bitmapdc, bm);
-        RECT r = {0, 0, 1600, 64};  // FIXME, screensize
-        FillRect(bitmapdc, &r, CreateSolidBrush(tags[tag].color));
+        RECT r = {0, 0, barbmwidth, barbmheight};
+        HBRUSH br = CreateSolidBrush(tags[tag].color);
+        FillRect(bitmapdc, &r, br);
+        DeleteObject(br);
     } else {
         SelectObject(bitmapdc, bm);
     }
