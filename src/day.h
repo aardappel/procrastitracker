@@ -69,8 +69,9 @@ struct daydata {
     }
 
     void formatstats(String &s, DWORD parentsec) {
-        s.FormatCat("%d%% of parent", seconds * 100 / parentsec);
-        if (semiidleseconds) s.FormatCat(", %d%% semiidle", semiidleseconds * 100 / seconds);
+        s.FormatCat("%d%% of parent", parentsec ? seconds * 100 / parentsec : 0);
+        if (semiidleseconds && seconds)
+            s.FormatCat(", %d%% semiidle", semiidleseconds * 100 / seconds);
         if (key) s.FormatCat(", %d keys", key);
         if (lmb) s.FormatCat(", %d lmb", lmb);
         if (rmb) s.FormatCat(", %d rmb", rmb);
