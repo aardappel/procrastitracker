@@ -114,6 +114,20 @@ struct daydata {
     }
 };
 
+// Day orderings have gaps in them (all months are 32 days, all years 512),
+// so days can only be added by going through an actual date.
+int dayoffset(int nday, int days) {
+    daydata d;
+    d.nday = (WORD)nday;
+    SYSTEMTIME st;
+    d.createsystime(st);
+    unsigned long long ft;
+    SystemTimeToFileTime(&st, (FILETIME *)&ft);
+    ft += days * 24LL * 60 * 60 * 10000000;
+    FileTimeToSystemTime((FILETIME *)&ft, &st);
+    return dayordering(st);
+}
+
 struct lday : daydata, SlabAllocated<lday> {
     lday *next;
     lday(lday *_n) : next(_n) {}

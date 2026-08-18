@@ -453,20 +453,28 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
                             switch (sel) {
                                 case 0: starttime = endtime; break;  //"Today");
                                 case 1:
-                                    endtime--;
+                                    endtime = dayoffset(endtime, -1);
                                     starttime = endtime;
                                     break;  //"Yesterday");
                                 case 2:
-                                    starttime =
-                                        endtime - ((st.wDayOfWeek == 1 ? 8 : st.wDayOfWeek) - 1);
-                                    break;                                //"Since Monday Morning");
-                                case 3: starttime = endtime - 6; break;   //"Last 7 Days");
-                                case 4: starttime = endtime - 13; break;  //"Last 14 Days");
+                                    starttime = dayoffset(
+                                        endtime, -((st.wDayOfWeek == 1 ? 8 : st.wDayOfWeek) - 1));
+                                    break;  //"Since Monday Morning");
+                                case 3:
+                                    starttime = dayoffset(endtime, -6);
+                                    break;  //"Last 7 Days");
+                                case 4:
+                                    starttime = dayoffset(endtime, -13);
+                                    break;  //"Last 14 Days");
                                 case 5:
-                                    starttime = endtime - (st.wDay - 1);
-                                    break;                                //"Month To Date");
-                                case 6: starttime = endtime - 30; break;  //"30 Days");
-                                case 7: starttime = endtime - 90; break;  //"90 Days");
+                                    starttime = dayoffset(endtime, -(st.wDay - 1));
+                                    break;  //"Month To Date");
+                                case 6:
+                                    starttime = dayoffset(endtime, -30);
+                                    break;  //"30 Days");
+                                case 7:
+                                    starttime = dayoffset(endtime, -90);
+                                    break;  //"90 Days");
                                 case 8:
                                     st.wMonth = 1;
                                     st.wDay = 1;
