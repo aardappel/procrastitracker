@@ -85,9 +85,8 @@ VOID CALLBACK timerfunc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
         if (qfpin) {  // we're on Vista or above, only this function allows a 32bit process to
                       // query a 64bit one
             wchar_t uexename[MAXTMPSTR];
-            DWORD testl = sizeof(uexename);
-            qfpin(ph, 0, uexename, &testl);
-            uexename[MAXTMPSTR - 1] = 0;
+            DWORD testl = MAXTMPSTR;  // In characters, not bytes.
+            if (!qfpin(ph, 0, uexename, &testl)) *uexename = 0;
             WideCharToMultiByte(CP_UTF8, 0, uexename, -1, exename, MAXTMPSTR, NULL, NULL);
             exename[MAXTMPSTR - 1] = 0;
         } else {  // we're on XP or 2000
