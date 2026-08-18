@@ -49,6 +49,10 @@ void start_xinput_activity_timer() {
         return;
     }
 
+    // Without this, the first controller input would be seen as the end of an
+    // away period as long as the machine has been up.
+    g_dwLastXInputTick = GetTickCount();
+
     int timer_repeat_ms = 1000 / freq;
 
     // Microsoft why are you like this
