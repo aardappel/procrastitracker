@@ -280,6 +280,9 @@ void update_url() {
                 }
                 if (pCacheRequest) pCacheRequest->Release();
                 if (pAndCondition) pAndCondition->Release();
+                if (pClassCondition) pClassCondition->Release();
+                if (pEditCondition) pEditCondition->Release();
+                SysFreeString(varPropClass.bstrVal);
                 pRootElement->Release();
             }
         }
