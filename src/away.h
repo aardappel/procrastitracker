@@ -26,7 +26,7 @@ INT_PTR CALLBACK Away(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
                     addtodatabase(buf, st, 0, awaysecsdialog);
                 }
             }
-            EndDialog(hDlg, LOWORD(wParam));
+            DestroyWindow(hDlg);
             awaydialog = NULL;
             return (INT_PTR)TRUE;
     }
@@ -44,7 +44,7 @@ void TrackAwayTime(DWORD awaysecs) {
     } else if (awaymins < prefs[PREF_AWAY].ival) {
         if (awaydialog) {
             // if the user hadn't responded to the previous dialog, kill it
-            EndDialog(awaydialog, IDC_BUTTON8);
+            DestroyWindow(awaydialog);
         }
         awaysecsdialog = awaysecs;
         awaydialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_AWAYDIALOG), mainhwnd, Away);
