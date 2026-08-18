@@ -304,6 +304,7 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
     UNREFERENCED_PARAMETER(lParam);
     switch (message) {
         case WM_INITDIALOG: {
+            statsdialog = hDlg;
             filterontag = -1;
             selectednode = NULL;
             filterstrcontents[0] = 0;
@@ -351,6 +352,7 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
                          (LPARAM)LoadIcon(hInst, MAKEINTRESOURCE(IDI_PROCRASTITRACKER)));
             return (INT_PTR)TRUE;
         }
+        case WM_DESTROY: statsdialog = NULL; break;
         case WM_SIZING: {
             int min_x = 400;
             int min_y = 300;

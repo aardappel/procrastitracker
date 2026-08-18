@@ -177,6 +177,7 @@ char databasetemp[MAX_PATH];
 HINSTANCE hInst;
 HWND mainhwnd = NULL;
 HWND awaydialog = NULL;
+HWND statsdialog = NULL;
 HWND treeview = NULL;
 HWND tagpicker = NULL;
 HWND taglist = NULL;
@@ -268,6 +269,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             // inputhookcleanup();
             switch (wmId) {
                 case 'ST':
+                    // A second stats dialog would take over the window globals the one
+                    // already up is still using.
+                    if (statsdialog) {
+                        SetForegroundWindow(statsdialog);
+                        break;
+                    }
                     DialogBox(hInst, MAKEINTRESOURCE(IDD_PROPPAGE_LARGE), hWnd, Stats);
                     break;
                 case 'AS':
