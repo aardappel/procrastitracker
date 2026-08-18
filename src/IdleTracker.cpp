@@ -71,7 +71,10 @@ LRESULT CALLBACK MouseTracker(int code, WPARAM wParam, LPARAM lParam) {
             case WM_RBUTTONDOWN: rmb++; break;
             case WM_MOUSEWHEEL: scr += abs(*(((short *)&pStruct->mouseData) + 1)); break;
         }
-        if (pStruct->pt.x != g_mouseLocX || pStruct->pt.y != g_mouseLocY) {
+        // Buttons and the wheel are activity even when the cursor doesn't move, the
+        // position check is only there to ignore mouse moves that don't move it.
+        if (wParam != WM_MOUSEMOVE || pStruct->pt.x != g_mouseLocX ||
+            pStruct->pt.y != g_mouseLocY) {
             g_mouseLocX = pStruct->pt.x;
             g_mouseLocY = pStruct->pt.y;
             CheckAway(g_dwLastTick, curtime);
