@@ -204,6 +204,9 @@ long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR) {
                     case 'P':
                         if (selectednode != root) {
                             selectednode->firstinchain()->mergallsubstring();
+                            // The nodes merged in have been deleted, and one of them may
+                            // have been the previous selection.
+                            prevselectednode = NULL;
                             rendertree(hWndDlg, false);
                         }
                         return TRUE;
