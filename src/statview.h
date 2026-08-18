@@ -309,6 +309,7 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
             selectednode = NULL;
             filterstrcontents[0] = 0;
             treeview = GetDlgItem(hDlg, IDC_TREE1);
+            endtime = now();
             rendertree(hDlg, false);
             taglist = GetDlgItem(hDlg, IDC_LIST1);
             if (!tagimages) {
@@ -333,7 +334,6 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
             SendMessageA(foldslider, TBM_SETRANGE, FALSE, (LPARAM)MAKELONG(1, 5));
             SendMessageA(foldslider, TBM_SETPOS, TRUE, foldlevel);
             minfilter.seteditbox(hDlg);
-            endtime = now();
             setdaterangecontrols(hDlg);
             quickcombo = GetDlgItem(hDlg, IDC_COMBO1);
             SendMessageA(quickcombo, CB_ADDSTRING, 0, (LPARAM) "Today");
