@@ -64,6 +64,6 @@
 
 const int MAXTMPSTR = 1000;
 
-const int MAXCTRLS = 3; // XInput controller indexes are 0-3
+const int MAXCTRLS = XUSER_MAX_COUNT; // XInput controller indexes are 0-3
 
 // TODO: reference additional headers your program requires here
