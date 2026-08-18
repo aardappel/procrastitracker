@@ -246,6 +246,9 @@ BOOL FileRequest(HWND hWnd, char *requestfilename, size_t reqlen, char *defaultn
                  char *title, bool doexport = true, bool multi = false) {
     OPENFILENAMEA ofn;
     memset(&ofn, 0, sizeof(ofn));
+    // A multi-select result is a list of strings terminated by an empty one, so
+    // anything the dialog leaves behind must read as empty.
+    memset(requestfilename, 0, reqlen);
     strcpy(requestfilename, defaultname);
     ofn.lStructSize = sizeof(OPENFILENAMEA);
     ofn.lpstrFile = requestfilename;
