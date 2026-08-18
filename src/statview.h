@@ -11,10 +11,9 @@ void setbar(int tag, HDC hdc) {
     if (!bm) {
         if (!bitmapdc) bitmapdc = CreateCompatibleDC(hdc);
         bm = CreateCompatibleBitmap(hdc, 1920, 64);
-        HBITMAP old = (HBITMAP)SelectObject(bitmapdc, bm);
+        SelectObject(bitmapdc, bm);
         RECT r = {0, 0, 1600, 64};  // FIXME, screensize
         FillRect(bitmapdc, &r, CreateSolidBrush(tags[tag].color));
-        SelectObject(bitmapdc, old);
     } else {
         SelectObject(bitmapdc, bm);
     }
