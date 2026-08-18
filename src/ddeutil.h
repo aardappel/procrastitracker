@@ -192,6 +192,9 @@ void CALLBACK WinEventProc
 
 // Independent UIA based URL getter.
 void update_url() {
+    // Windows without an address bar (app windows, popups) must not end up
+    // inheriting the URL of whatever window we read one from last.
+    current_chrome_url[0] = 0;
     IUIAutomation* pAutomation = NULL;
     HRESULT hr = CoCreateInstance(__uuidof(CUIAutomation), NULL, CLSCTX_INPROC_SERVER, __uuidof(IUIAutomation), (void**)&pAutomation);
 
