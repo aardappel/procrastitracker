@@ -177,12 +177,13 @@ long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR) {
                     case 'C': {
                         if (selectednode->last) {
                             char buf[100] = "100";
-                            CWin32InputBox::InputBox(
-                                "Manual Override",
-                                "Enter percentage to scale this node by (100 = no change)", buf, 100, false,
-                                hWndDlg);
-                            selectednode->changetime(atoi(buf));
-                            rendertree(hWndDlg, true);
+                            if (CWin32InputBox::InputBox(
+                                    "Manual Override",
+                                    "Enter percentage to scale this node by (100 = no change)", buf,
+                                    100, false, hWndDlg) == IDOK) {
+                                selectednode->changetime(atoi(buf));
+                                rendertree(hWndDlg, true);
+                            }
                         }
                         return TRUE;
                     }
