@@ -32,7 +32,6 @@ bool changesmade = false;
 DWORD awaysecsdialog = 0;
 
 DWORD maxsecondsforbargraph = 100000;
-DWORD bargraphwidth = 100;
 
 int starttime, endtime, firstday;
 
@@ -196,7 +195,6 @@ node *selectednode = NULL;
 node *prevselectednode = NULL;
 
 const int bmsize = 16;
-const int daygraphwidth = 200;
 
 #include "away.h"
 #include "xinputactivity.h"
@@ -478,6 +476,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_PROCRASTITRACKER));
     RegisterClassEx(&wcex);
     hInst = hInstance;
+    registerdaygraphclass();
     whitebrush = CreateSolidBrush(0xFFFFFF);
     greybrush = CreateSolidBrush(0xb99d7f);
     mainhwnd = CreateWindow("PROCRASTITRACKER", "procrastitracker", WS_OVERLAPPEDWINDOW,

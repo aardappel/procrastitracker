@@ -319,7 +319,7 @@ struct node : SlabAllocated<node> {
         pd.accumulate(accum, parent && !parent->ht);
     }
 
-    void treeview(int depth, HWND hWnd, HTREEITEM parent, HTREEITEM after, int timelevel = 0,
+    void treeview(int depth, HWND tv, HTREEITEM parent, HTREEITEM after, int timelevel = 0,
                   char *concat = "") {
         if (hidden) return;
         if (!accum.seconds || accum.seconds / 60 < minfilter.ival) return;
@@ -327,7 +327,7 @@ struct node : SlabAllocated<node> {
         if (*concat) full.Cat(" - ");
         full.Cat(nname);
         if (onechild && !last)
-            return onechild->treeview(depth, hWnd, parent, after, timelevel, full);
+            return onechild->treeview(depth, tv, parent, after, timelevel, full);
         String s;
         accum.format(s, timelevel);
         s.Cat(" - ");
@@ -343,10 +343,9 @@ struct node : SlabAllocated<node> {
         tvinsert.item.lParam = (LPARAM) this;
         tvinsert.item.state = (depth < (int)foldlevel && ht) || expanded ? TVIS_EXPANDED : 0;
         tvinsert.item.stateMask = -1;
-        HTREEITEM thisone =
-            (HTREEITEM)SendDlgItemMessageW(hWnd, IDC_TREE1, TVM_INSERTITEMW, 0, (LPARAM)&tvinsert);
+        HTREEITEM thisone = (HTREEITEM)SendMessageW(tv, TVM_INSERTITEMW, 0, (LPARAM)&tvinsert);
         if (onechild) {
-            onechild->treeview(depth + 1, hWnd, thisone, TVI_LAST);
+            onechild->treeview(depth + 1, tv, thisone, TVI_LAST);
         } else if (ht && ht->numelems) {
             Vector<node *> v;
             ht->getelements(v);
@@ -355,7 +354,7 @@ struct node : SlabAllocated<node> {
             if (v[0]->accum.seconds > 60) timelevel++;
             if (v[0]->accum.seconds > 60 * 60) timelevel++;
             if (parent == NULL) maxsecondsforbargraph = v[0]->accum.seconds;
-            loopv(i, v) v[i]->treeview(depth + 1, hWnd, thisone, TVI_LAST, timelevel);
+            loopv(i, v) v[i]->treeview(depth + 1, tv, thisone, TVI_LAST, timelevel);
             v.setsize_nd(0);
         }
     }
