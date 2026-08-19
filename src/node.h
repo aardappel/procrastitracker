@@ -26,6 +26,7 @@ struct node : SlabAllocated<node> {
     bool hidden;
     bool expanded;
     bool instrfilter;
+    bool selected;
 
     node(char *_name, node *_p)
         : ht(NULL),
@@ -37,7 +38,8 @@ struct node : SlabAllocated<node> {
           ts(NULL),
           hidden(false),
           expanded(false),
-          instrfilter(true) {}
+          instrfilter(true),
+          selected(false) {}
 
     ~node() {
         DELETEP(onechild);
@@ -82,6 +84,16 @@ struct node : SlabAllocated<node> {
         }
     }
 
+    void clearselected() {
+        selected = false;
+        if (onechild)
+            onechild->clearselected();
+        else if (ht) {
+            ht->resetiter();
+            while (ht->validiter()) ht->nextiter()->clearselected();
+        }
+    }
+
     int gettag() {
         node *n = this;
         while (!n->tag && n->parent) n = n->parent;
@@ -109,6 +121,28 @@ struct node : SlabAllocated<node> {
         int n = 0;
         for (lday *d = last; d; d = d->next) n++;
         return n;
+    }
+
+    // Day and minute of the most recent thing recorded on this node or anything below it,
+    // as a single number to compare nodes by. The day list isn't kept in any order, since
+    // culling and merging append to it, so it all has to be looked at.
+    DWORD lastactivity() {
+        DWORD m = 0;
+        for (lday *d = last; d; d = d->next) {
+            DWORD t = ((DWORD)d->nday << 16) | d->nminute;
+            if (t > m) m = t;
+        }
+        if (onechild) {
+            DWORD t = onechild->lastactivity();
+            if (t > m) m = t;
+        } else if (ht) {
+            ht->resetiter();
+            while (ht->validiter()) {
+                DWORD t = ht->nextiter()->lastactivity();
+                if (t > m) m = t;
+            }
+        }
+        return m;
     }
 
     void hit(SYSTEMTIME &st, DWORD idletime, DWORD awaysecs) {

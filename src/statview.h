@@ -26,6 +26,19 @@ void setbar(int tag, HDC hdc) {
 
 const int controlmargin = 6;
 
+// Ids of the Edit menu items, in the style the tray menu's are in.
+enum {
+    MENU_SELECTALL = 'SA',
+    MENU_APPLYTAG = 'AT',
+    MENU_OVERRIDE = 'MO',
+    MENU_HIDE = 'HI',
+    MENU_UNHIDE = 'UH',
+    MENU_MERGESUB = 'MS',
+    MENU_MERGE = 'MG',
+};
+
+HWND menutip = NULL;  // Menus have no tips of their own, this one gets tracked by hand.
+
 // Tabs of the stats dialog, in the order they get inserted.
 enum { TAB_STATISTICS = 0, TAB_DAYS };
 
@@ -280,6 +293,201 @@ void redrawtreeview() {
     InvalidateRect(treeview, &r, TRUE);
 }
 
+// The tree view control has no multi selection of its own: node::selected holds it, and the
+// items get their TVIS_SELECTED state set to match. selectednode stays the node the caret is
+// on, which is what the operations that can only work on one node still go by.
+node *selanchor = NULL;       // What a shift click or shift arrow extends the range from.
+WNDPROC treeviewproc = NULL;  // The tree view's own handler, subclassed for multi select.
+bool settingtreesel = false;  // Set while a selection change originates from the code below.
+
+node *treeitemnode(HWND tv, HTREEITEM h) {
+    TVITEM tvi = {0};
+    tvi.mask = TVIF_HANDLE | TVIF_PARAM;
+    tvi.hItem = h;
+    return TreeView_GetItem(tv, &tvi) ? (node *)tvi.lParam : NULL;
+}
+
+// Walks all items, including the ones a collapsed parent keeps off screen.
+HTREEITEM nexttreeitem(HWND tv, HTREEITEM h) {
+    HTREEITEM n = TreeView_GetChild(tv, h);
+    if (n) return n;
+    for (; h; h = TreeView_GetParent(tv, h)) {
+        n = TreeView_GetNextSibling(tv, h);
+        if (n) return n;
+    }
+    return NULL;
+}
+
+void settreeitemselected(HWND tv, HTREEITEM h, bool sel) {
+    TVITEM tvi = {0};
+    tvi.mask = TVIF_HANDLE | TVIF_STATE;
+    tvi.hItem = h;
+    tvi.stateMask = TVIS_SELECTED;
+    tvi.state = sel ? TVIS_SELECTED : 0;
+    TreeView_SetItem(tv, &tvi);
+}
+
+// Operations work on the selected nodes the tree holds, in the order it lists them.
+#define loopselected(n)                                           \
+    for (HTREEITEM selitem = TreeView_GetRoot(treeview); selitem; \
+         selitem = nexttreeitem(treeview, selitem))               \
+        if (node *n = treeitemnode(treeview, selitem))            \
+            if (n->selected)
+
+node *firstselectednode() {
+    loopselected(n) return n;
+    return NULL;
+}
+
+// Puts the highlight on exactly the items whose node is selected, which is all there is to
+// showing the selection.
+void refreshtreeselection() {
+    for (HTREEITEM h = TreeView_GetRoot(treeview); h; h = nexttreeitem(treeview, h)) {
+        TVITEM tvi = {0};
+        tvi.mask = TVIF_HANDLE | TVIF_PARAM | TVIF_STATE;
+        tvi.hItem = h;
+        tvi.stateMask = TVIS_SELECTED;
+        if (!TreeView_GetItem(treeview, &tvi)) continue;
+        node *n = (node *)tvi.lParam;
+        bool sel = n && n->selected;
+        // This runs over the whole tree, so items that are already right are left alone
+        // rather than being marked for a redraw they don't need.
+        if (sel != ((tvi.state & TVIS_SELECTED) != 0)) settreeitemselected(treeview, h, sel);
+    }
+}
+
+void selectonly(node *n) {
+    root->clearselected();
+    if (n) n->selected = true;
+    selanchor = n;
+}
+
+// The item a node is shown in, or NULL when it is folded away or gone from the tree.
+HTREEITEM visibletreeitem(node *n) {
+    for (HTREEITEM h = TreeView_GetRoot(treeview); h; h = TreeView_GetNextVisible(treeview, h))
+        if (treeitemnode(treeview, h) == n) return h;
+    return NULL;
+}
+
+// Everything between two items in display order, which is what a shift select spans.
+void selectrange(HTREEITEM from, HTREEITEM to) {
+    root->clearselected();
+    int edges = 0;
+    for (HTREEITEM h = TreeView_GetRoot(treeview); h; h = TreeView_GetNextVisible(treeview, h)) {
+        if (h == from) edges++;
+        if (h == to) edges++;
+        if (edges) {
+            node *n = treeitemnode(treeview, h);
+            if (n) n->selected = true;
+        }
+        // Both ends have been passed, whichever of the two came first.
+        if (edges >= 2) break;
+    }
+}
+
+void extendselection(node *anchor, HTREEITEM to) {
+    HTREEITEM from = anchor ? visibletreeitem(anchor) : NULL;
+    selectrange(from ? from : to, to);
+    // Shift selecting again keeps growing the range from the same anchor.
+    selanchor = anchor ? anchor : treeitemnode(treeview, to);
+}
+
+// Ctrl-A takes everything the tree currently shows, so nodes folded away inside a collapsed
+// parent stay out of it.
+void selectalltreeitems() {
+    root->clearselected();
+    for (HTREEITEM h = TreeView_GetRoot(treeview); h; h = TreeView_GetNextVisible(treeview, h)) {
+        node *n = treeitemnode(treeview, h);
+        if (n) n->selected = true;
+    }
+    selanchor = firstselectednode();
+    if (!selectednode) selectednode = selanchor;
+    refreshtreeselection();
+}
+
+// Moving the caret makes the control select that item by itself, so the rest of the
+// selection has to be put back after it.
+void settreecaret(HTREEITEM h) {
+    settingtreesel = true;
+    TreeView_SelectItem(treeview, h);
+    settingtreesel = false;
+    refreshtreeselection();
+}
+
+// A ctrl click toggles a single node, a shift click replaces the selection with the range
+// from wherever the last plain or ctrl click left the anchor.
+void treeselectclick(HTREEITEM h, bool shift) {
+    node *n = treeitemnode(treeview, h);
+    if (!n) return;
+    if (shift) {
+        extendselection(selanchor, h);
+    } else {
+        n->selected = !n->selected;
+        selanchor = n;
+    }
+    prevselectednode = selectednode;
+    selectednode = n->selected ? n : firstselectednode();
+    settreecaret(h);
+}
+
+// The control does no multi selection, so ctrl and shift get dealt with before it sees them.
+LRESULT CALLBACK TreeViewProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    switch (message) {
+        case WM_LBUTTONDOWN: {
+            TVHITTESTINFO ht;
+            ht.pt.x = GET_X_LPARAM(lParam);
+            ht.pt.y = GET_Y_LPARAM(lParam);
+            HTREEITEM h = TreeView_HitTest(hwnd, &ht);
+            if (h && (ht.flags & TVHT_ONITEM)) {
+                if (GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000) {
+                    SetFocus(hwnd);
+                    treeselectclick(h, (GetKeyState(VK_SHIFT) & 0x8000) != 0);
+                    return 0;
+                }
+                // A plain click on the item the caret is already on is no change to the
+                // control, so it reports none and the rest of the selection gets dropped here.
+                if (h == TreeView_GetSelection(hwnd)) {
+                    LRESULT r = CallWindowProc(treeviewproc, hwnd, message, wParam, lParam);
+                    selectonly(treeitemnode(hwnd, h));
+                    refreshtreeselection();
+                    return r;
+                }
+            }
+            break;
+        }
+        case WM_KEYDOWN: {
+            if (GetKeyState(VK_CONTROL) & 0x8000) {
+                if (wParam == 'A') {
+                    selectalltreeitems();
+                    return 0;
+                }
+            } else if (GetKeyState(VK_SHIFT) & 0x8000) {
+                switch (wParam) {
+                    case VK_UP:
+                    case VK_DOWN:
+                    case VK_PRIOR:
+                    case VK_NEXT:
+                    case VK_HOME:
+                    case VK_END: {
+                        // The control moves the caret first, which cuts the selection back to
+                        // just that one item.
+                        node *anchor = selanchor;
+                        LRESULT r = CallWindowProc(treeviewproc, hwnd, message, wParam, lParam);
+                        HTREEITEM caret = TreeView_GetSelection(hwnd);
+                        if (caret) {
+                            extendselection(anchor, caret);
+                            refreshtreeselection();
+                        }
+                        return r;
+                    }
+                }
+            }
+            break;
+        }
+    }
+    return CallWindowProc(treeviewproc, hwnd, message, wParam, lParam);
+}
+
 void recompaccum() {
     root->checkstrfilter(false);
     daydata d;
@@ -314,8 +522,11 @@ void accumulateday() {
 
 // Puts whatever is currently accumulated in a tree view.
 void filltree(HWND tv) {
+    // Emptying the tree can report a selection change that isn't one the user made.
+    settingtreesel = true;
     TreeView_DeleteAllItems(tv);
     root->treeview(0, tv, NULL, TVI_ROOT);
+    settingtreesel = false;
 }
 
 void renderdaytree() {
@@ -333,6 +544,8 @@ void renderdaytree() {
 void rendertree(HWND hDlg) {
     accumulaterange();
     filltree(treeview);
+    // The items are all new ones, so the selection has to be put back onto them.
+    refreshtreeselection();
     rangebargraphmax = maxsecondsforbargraph;
     if (daygraph) {
         // A day that dropped out of the range or lost all its time is no longer selectable.
@@ -445,12 +658,219 @@ long handleCustomDraw(HWND hWndTreeView, LPNMTVCUSTOMDRAW pNMTVCD) {
 
 bool ApplyTagToNode(HWND hDlg) {
     int sel = SendMessage(taglist, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
-    if (sel >= 0 && selectednode && sel != selectednode->tag) {
-        selectednode->tag = sel;
-        rendertree(hDlg);
-        return true;
+    if (sel < 0) return false;
+    bool changed = false;
+    loopselected(n) if (n->tag != sel) {
+        n->tag = sel;
+        changed = true;
     }
-    return false;
+    if (changed) rendertree(hDlg);
+    return changed;
+}
+
+void scaleselection(HWND hDlg) {
+    // Nodes without any time of their own have nothing to scale.
+    bool anytime = false;
+    loopselected(n) if (n->last) anytime = true;
+    if (!anytime) return;
+    char buf[100] = "100";
+    if (CWin32InputBox::InputBox("Manual Override",
+                                 "Enter percentage to scale the selected nodes by (100 = no "
+                                 "change)",
+                                 buf, 100, false, hDlg) != IDOK)
+        return;
+    loopselected(n) n->changetime(atoi(buf));
+    rendertree(hDlg);
+}
+
+void hideselection(HWND hDlg) {
+    bool changed = false;
+    loopselected(n) if (n != root) {
+        n->hidden = true;
+        changed = true;
+    }
+    if (changed) rendertree(hDlg);
+}
+
+void unhideselection(HWND hDlg) {
+    bool changed = false;
+    loopselected(n) {
+        n->clearhidden();
+        changed = true;
+    }
+    if (changed) rendertree(hDlg);
+}
+
+// Merging in the siblings deletes them, and they may well be selected themselves, so this
+// one only ever runs on a single node.
+void mergesubstringsiblings(HWND hDlg) {
+    int count = 0;
+    loopselected(n) count++;
+    if (count != 1) {
+        MessageBoxA(hDlg,
+                    "This merges the siblings whose name contains the selected node's name "
+                    "into it, so it needs exactly one node selected.",
+                    "Merge Substring Siblings", MB_OK | MB_ICONEXCLAMATION);
+        return;
+    }
+    node *first = firstselectednode();
+    first->firstinchain()->mergallsubstring();
+    // Whatever was merged in has been deleted, selection and all.
+    selectonly(first);
+    selectednode = first;
+    prevselectednode = NULL;
+    rendertree(hDlg);
+}
+
+// The selection with each chain collapsed to its head and duplicates dropped. The caller
+// has to empty this with setsize_nd, since a Vector deletes the pointers left in it.
+void getselectedchains(Vector<node *> &v) {
+    loopselected(n) {
+        node *f = n->firstinchain();
+        // The root has no parent to be taken out of, so it never takes part in a merge.
+        if (!f->parent) continue;
+        bool dup = false;
+        loopv(i, v) if (v[i] == f) dup = true;
+        if (!dup) v.push(f);
+    }
+}
+
+// Merging a node into one below it would throw the merged data away along with it.
+bool mergeableinto(node *o, node *target) { return o != target && !o->isancestorof(target); }
+
+// Nodes that are the same app or site under a changed title format get merged into one.
+// Which one that is follows from the data: the one still being added to is the one whose
+// name the thing currently goes under.
+void mergeselection(HWND hDlg) {
+    Vector<node *> sel;
+    getselectedchains(sel);
+    if (sel.size() < 2) {
+        sel.setsize_nd(0);
+        MessageBoxA(hDlg,
+                    "This merges all selected nodes into the one of them that was added to "
+                    "most recently, so it needs two or more nodes selected.",
+                    "Merge Nodes", MB_OK | MB_ICONEXCLAMATION);
+        return;
+    }
+    node *target = NULL;
+    DWORD recent = 0;
+    loopv(i, sel) {
+        DWORD t = sel[i]->lastactivity();
+        if (!target || t > recent) {
+            recent = t;
+            target = sel[i];
+        }
+    }
+    // Everything gets picked before anything is deleted, as the nodes that go away take
+    // their whole subtree with them.
+    Vector<node *> tomerge;
+    loopv(i, sel) {
+        node *o = sel[i];
+        if (!mergeableinto(o, target)) continue;
+        // A node inside another one that is about to be merged comes along with it.
+        bool covered = false;
+        loopv(j, sel) if (sel[j] != o && mergeableinto(sel[j], target) &&
+                          sel[j]->isancestorof(o)) covered = true;
+        if (!covered) tomerge.push(o);
+    }
+    loopv(i, tomerge) {
+        target->merge(*tomerge[i]);
+        tomerge[i]->parent->remove(tomerge[i]);
+    }
+    bool merged = !tomerge.empty();
+    tomerge.setsize_nd(0);
+    sel.setsize_nd(0);
+    if (merged) {
+        // The nodes that went away took their selection with them.
+        selectonly(target);
+        selectednode = target;
+        prevselectednode = NULL;
+        rendertree(hDlg);
+    }
+}
+
+const char *menuitemtip(UINT id) {
+    switch (id) {
+        case MENU_SELECTALL:
+            return "Selects every node the tree is currently showing. Nodes folded away inside "
+                   "a collapsed parent are not included.";
+        case MENU_APPLYTAG:
+            return "Gives every selected node the tag that is highlighted in the tag list "
+                   "below.\r\nWarning: irreversible, the tags it replaces are not remembered.";
+        case MENU_OVERRIDE:
+            return "Scales the time recorded on every selected node by a percentage, for "
+                   "correcting time that was tracked wrongly.\r\nWarning: irreversible.";
+        case MENU_HIDE:
+            return "Takes every selected node out of the tree. They can be brought back with "
+                   "Unhide on a node above them.";
+        case MENU_UNHIDE:
+            return "Brings back everything hidden below the selected nodes.";
+        case MENU_MERGESUB:
+            return "Merges the siblings whose name contains the selected node's name into it, "
+                   "for names that only differ by what got appended to them. Needs exactly one "
+                   "node selected.\r\nWarning: irreversible, the siblings are deleted.";
+        case MENU_MERGE:
+            return "Merges all selected nodes into whichever of them was added to most "
+                   "recently, for one app or site that has been recorded under several names."
+                   "\r\nWarning: irreversible, the other nodes are deleted.";
+    }
+    return NULL;
+}
+
+// A tip only shows while the menu it belongs to is open, so it gets placed by hand rather
+// than by the tool it is attached to.
+void showmenutip(const char *text) {
+    if (!menutip) return;
+    TOOLINFOA ti = {0};
+    ti.cbSize = sizeof(ti);
+    ti.hwnd = statsdialog;
+    ti.uId = (UINT_PTR)statsdialog;
+    if (!text) {
+        SendMessageA(menutip, TTM_TRACKACTIVATE, FALSE, (LPARAM)&ti);
+        return;
+    }
+    ti.lpszText = (LPSTR)text;
+    SendMessageA(menutip, TTM_UPDATETIPTEXTA, 0, (LPARAM)&ti);
+    POINT pt;
+    GetCursorPos(&pt);
+    SendMessageA(menutip, TTM_TRACKPOSITION, 0, MAKELPARAM(pt.x + 16, pt.y + 16));
+    SendMessageA(menutip, TTM_TRACKACTIVATE, TRUE, (LPARAM)&ti);
+}
+
+// The keys below are the tree's own, the menu is there to say they exist.
+void createeditmenu(HWND hDlg) {
+    HMENU edit = CreatePopupMenu();
+    AppendMenuA(edit, MF_STRING, MENU_SELECTALL, "Select &All\tCtrl+A");
+    AppendMenuA(edit, MF_SEPARATOR, 0, NULL);
+    AppendMenuA(edit, MF_STRING, MENU_APPLYTAG, "Apply &Tag to Nodes\tT");
+    AppendMenuA(edit, MF_STRING, MENU_OVERRIDE, "Manual &Override...\tCtrl+C");
+    AppendMenuA(edit, MF_STRING, MENU_HIDE, "&Hide\tCtrl+H");
+    AppendMenuA(edit, MF_STRING, MENU_UNHIDE, "&Unhide\tCtrl+U");
+    AppendMenuA(edit, MF_SEPARATOR, 0, NULL);
+    AppendMenuA(edit, MF_STRING, MENU_MERGESUB, "Merge &Substring Siblings\tCtrl+P");
+    AppendMenuA(edit, MF_STRING, MENU_MERGE, "&Merge Nodes\tCtrl+M");
+    HMENU bar = CreateMenu();
+    AppendMenuA(bar, MF_POPUP, (UINT_PTR)edit, "&Edit");
+    SetMenu(hDlg, bar);
+    // The menu takes its height out of the client area, which the template's controls are
+    // laid out against, so the window grows by as much.
+    RECT wr;
+    GetWindowRect(hDlg, &wr);
+    MoveWindow(hDlg, wr.left, wr.top, wr.right - wr.left,
+               wr.bottom - wr.top + GetSystemMetrics(SM_CYMENU), TRUE);
+    menutip = CreateWindowExA(WS_EX_TOPMOST, TOOLTIPS_CLASSA, NULL,
+                              WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP, CW_USEDEFAULT,
+                              CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, hDlg, NULL, hInst,
+                              NULL);
+    TOOLINFOA ti = {0};
+    ti.cbSize = sizeof(ti);
+    ti.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
+    ti.hwnd = hDlg;
+    ti.uId = (UINT_PTR)hDlg;
+    ti.lpszText = (LPSTR)"";
+    SendMessageA(menutip, TTM_ADDTOOLA, 0, (LPARAM)&ti);
+    // Without a width the tips stay on one line, and these are sentences.
+    SendMessageA(menutip, TTM_SETMAXTIPWIDTH, 0, 400);
 }
 
 long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR) {
@@ -468,73 +888,25 @@ long handleNotify(HWND hWndDlg, int nIDCtrl, LPNMHDR pNMHDR) {
             // The day tree is a view of the same nodes, editing them happens on the main one.
             if (nIDCtrl != IDC_TREE1) break;
             NMTVKEYDOWN *kd = (NMTVKEYDOWN *)pNMHDR;
-            short ctrl = GetKeyState(VK_CONTROL);
-            if (selectednode && (ctrl & 0x8000)) switch (kd->wVKey) {
-                    case 'C': {
-                        if (selectednode->last) {
-                            char buf[100] = "100";
-                            if (CWin32InputBox::InputBox(
-                                    "Manual Override",
-                                    "Enter percentage to scale this node by (100 = no change)", buf,
-                                    100, false, hWndDlg) == IDOK) {
-                                selectednode->changetime(atoi(buf));
-                                rendertree(hWndDlg);
-                            }
-                        }
-                        return TRUE;
-                    }
-                    case 'H':
-                        if (selectednode != root) {
-                            selectednode->hidden = true;
-                            rendertree(hWndDlg);
-                        }
-                        return TRUE;
-                    case 'U':
-                        selectednode->clearhidden();
-                        rendertree(hWndDlg);
-                        return TRUE;
-                    case 'P':
-                        if (selectednode != root) {
-                            selectednode->firstinchain()->mergallsubstring();
-                            // The nodes merged in have been deleted, and one of them may
-                            // have been the previous selection.
-                            prevselectednode = NULL;
-                            rendertree(hWndDlg);
-                        }
-                        return TRUE;
-                    case 'M':
-                        if (selectednode != root) {
-                            if (prevselectednode) {
-                                prevselectednode = prevselectednode->firstinchain();
-                                selectednode = selectednode->firstinchain();
-                                // Merging into a node below the one that gets removed would
-                                // throw away the merged data along with it.
-                                if (prevselectednode != selectednode && prevselectednode->parent &&
-                                    !prevselectednode->isancestorof(selectednode)) {
-                                    selectednode->merge(*prevselectednode);
-                                    prevselectednode->parent->remove(prevselectednode);
-                                    selectednode = prevselectednode = NULL;
-                                    rendertree(hWndDlg);
-                                }
-                            }
-                        }
-                        return TRUE;
+            if (GetKeyState(VK_CONTROL) & 0x8000) switch (kd->wVKey) {
+                    case 'C': scaleselection(hWndDlg); return TRUE;
+                    case 'H': hideselection(hWndDlg); return TRUE;
+                    case 'U': unhideselection(hWndDlg); return TRUE;
+                    case 'P': mergesubstringsiblings(hWndDlg); return TRUE;
+                    case 'M': mergeselection(hWndDlg); return TRUE;
                 }
-            else if (selectednode)
-                switch (kd->wVKey) {
-                    case 'T':  // Apply tag to node.
-                    {
-                        if (ApplyTagToNode(hWndDlg)) return TRUE;
-                        break;
-                    }
-                }
+            else if (kd->wVKey == 'T' && ApplyTagToNode(hWndDlg))
+                return TRUE;
             break;
         }
         case TVN_SELCHANGED: {
-            if (nIDCtrl != IDC_TREE1) break;
+            if (nIDCtrl != IDC_TREE1 || settingtreesel) break;
             LPNMTREEVIEW pnmtv = (LPNMTREEVIEW)pNMHDR;
             prevselectednode = selectednode;
             selectednode = (node *)pnmtv->itemNew.lParam;
+            // A plain click or an arrow key drops everything else that was selected.
+            selectonly(selectednode);
+            refreshtreeselection();
             break;
         }
         case TVN_ITEMEXPANDED: {
@@ -611,9 +983,13 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
         case WM_INITDIALOG: {
             statsdialog = hDlg;
             filterontag = -1;
-            selectednode = NULL;
+            selectednode = prevselectednode = NULL;
+            selectonly(NULL);
             filterstrcontents[0] = 0;
             treeview = GetDlgItem(hDlg, IDC_TREE1);
+            treeviewproc =
+                (WNDPROC)SetWindowLongPtr(treeview, GWLP_WNDPROC, (LONG_PTR)TreeViewProc);
+            createeditmenu(hDlg);
             daylabel = GetDlgItem(hDlg, IDC_STATICHO);
             tabctrl = GetDlgItem(hDlg, IDC_TAB1);
             TCITEMA tci;
@@ -693,6 +1069,7 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
         }
         case WM_DESTROY:
             statsdialog = NULL;
+            menutip = NULL;
             tabctrl = NULL;
             daygraph = NULL;
             daylabel = NULL;
@@ -809,9 +1186,34 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
                     }
                     break;
                 }
-                case IDC_BUTTON2: {
+                case IDC_BUTTON2:
+                case MENU_APPLYTAG: {
                     if (ApplyTagToNode(hDlg)) return (INT_PTR)TRUE;
                     break;
+                }
+                case MENU_SELECTALL: {
+                    selectalltreeitems();
+                    return (INT_PTR)TRUE;
+                }
+                case MENU_OVERRIDE: {
+                    scaleselection(hDlg);
+                    return (INT_PTR)TRUE;
+                }
+                case MENU_HIDE: {
+                    hideselection(hDlg);
+                    return (INT_PTR)TRUE;
+                }
+                case MENU_UNHIDE: {
+                    unhideselection(hDlg);
+                    return (INT_PTR)TRUE;
+                }
+                case MENU_MERGESUB: {
+                    mergesubstringsiblings(hDlg);
+                    return (INT_PTR)TRUE;
+                }
+                case MENU_MERGE: {
+                    mergeselection(hDlg);
+                    return (INT_PTR)TRUE;
                 }
                 case IDC_BUTTON3: {
                     int sel = SendMessage(taglist, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
@@ -833,6 +1235,18 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
                 }
             }
             break;
+        }
+        case WM_MENUSELECT: {
+            const char *tip = NULL;
+            // No item is highlighted while a popup is, and none at all once the menu closes.
+            if (lParam && !(HIWORD(wParam) & (MF_POPUP | MF_SEPARATOR)))
+                tip = menuitemtip(LOWORD(wParam));
+            showmenutip(tip);
+            return (INT_PTR)TRUE;
+        }
+        case WM_EXITMENULOOP: {
+            showmenutip(NULL);
+            return (INT_PTR)TRUE;
         }
         case WM_HSCROLL: {
             int fl = SendMessageA(foldslider, TBM_GETPOS, 0, 0);
