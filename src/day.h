@@ -115,6 +115,9 @@ struct daydata {
     }
 };
 
+// A day in the 100 nanosecond units a FILETIME counts in.
+const long long dayfiletime = 24LL * 60 * 60 * 10000000;
+
 // Day orderings have gaps in them (all months are 32 days, all years 512),
 // so days can only be added by going through an actual date.
 int dayoffset(int nday, int days) {
@@ -124,7 +127,30 @@ int dayoffset(int nday, int days) {
     d.createsystime(st);
     unsigned long long ft;
     SystemTimeToFileTime(&st, (FILETIME *)&ft);
-    ft += days * 24LL * 60 * 60 * 10000000;
+    ft += days * dayfiletime;
+    FileTimeToSystemTime((FILETIME *)&ft, &st);
+    return dayordering(st);
+}
+
+// Whole days since the FILETIME epoch, the one count of days without gaps in it.
+unsigned long long daycount(int nday) {
+    daydata d;
+    d.nday = (WORD)nday;
+    SYSTEMTIME st;
+    d.createsystime(st);
+    unsigned long long ft;
+    SystemTimeToFileTime(&st, (FILETIME *)&ft);
+    return ft / (unsigned long long)dayfiletime;
+}
+
+// The FILETIME epoch (Jan 1st 1601) was a Monday, so whole weeks counted from it
+// start on Mondays as well.
+int weekordering(int nday) { return (int)(daycount(nday) / 7); }
+
+// Day ordering of the Monday that starts the week the given day falls in.
+int weekstart(int nday) {
+    unsigned long long ft = weekordering(nday) * 7ULL * dayfiletime;
+    SYSTEMTIME st;
     FileTimeToSystemTime((FILETIME *)&ft, &st);
     return dayordering(st);
 }

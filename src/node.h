@@ -68,6 +68,15 @@ struct node : SlabAllocated<node> {
         return n;
     }
 
+    // The tree only folds a parent into its child when it has nothing but that child, so
+    // unlike firstinchain this stops at one that has time of its own and got an item of
+    // its own with it. This is the node an item on screen really stands for.
+    node *firstinviewchain() {
+        node *n = this;
+        while (n->parent && n->parent->onechild && !n->parent->last) n = n->parent;
+        return n;
+    }
+
     bool isancestorof(node *n) {
         for (; n; n = n->parent)
             if (n == this) return true;

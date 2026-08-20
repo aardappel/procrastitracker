@@ -476,7 +476,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_PROCRASTITRACKER));
     RegisterClassEx(&wcex);
     hInst = hInstance;
-    registerdaygraphclass();
+    registertimegraphclass();
     whitebrush = CreateSolidBrush(0xFFFFFF);
     greybrush = CreateSolidBrush(0xb99d7f);
     mainhwnd = CreateWindow("PROCRASTITRACKER", "procrastitracker", WS_OVERLAPPEDWINDOW,

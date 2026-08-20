@@ -35,101 +35,161 @@ enum {
     MENU_UNHIDE = 'UH',
     MENU_MERGESUB = 'MS',
     MENU_MERGE = 'MG',
+    MENU_DELETE = 'DL',
 };
 
 HWND menutip = NULL;  // Menus have no tips of their own, this one gets tracked by hand.
 
 // Tabs of the stats dialog, in the order they get inserted.
-enum { TAB_STATISTICS = 0, TAB_DAYS };
+enum { TAB_STATISTICS = 0, TAB_TIME };
 
-// Days are drawn as columns wide enough to stay distinguishable, and scroll
+// How much time a single bar of the time graph covers, as offered by the period combo.
+enum { PERIOD_DAY = 0, PERIOD_WEEK, PERIOD_MONTH, PERIOD_YEAR, PERIOD_NUM };
+
+const char *periodnames[PERIOD_NUM] = {"Per Day", "Per Week", "Per Month", "Per Year"};
+// The most days a period can cover, which bounds how much time one of its bars can hold.
+const int perioddays[PERIOD_NUM] = {1, 7, 31, 366};
+
+// Periods are drawn as columns wide enough to stay distinguishable, and scroll
 // horizontally when more of them are in range than fit the window.
-const int daybarminwidth = 20;
-const int daygraphscrollstep = 40;  // Per scroll bar arrow click or wheel notch.
-const char *daygraphclass = "PTDAYGRAPH";
-const char *dayclickprompt = "Click a day in the graph...";
+const int barminwidth = 20;
+const int timegraphscrollstep = 40;  // Per scroll bar arrow click or wheel notch.
+const char *timegraphclass = "PTTIMEGRAPH";
+const char *barclickprompt = "Click a bar in the graph...";
 
-// A day cannot hold more than 24 hours, so anything above that is a collection
-// error that would otherwise flatten every correct day in the graph.
+// A day cannot hold more than 24 hours, so anything above what a period's days add up to
+// is a collection error that would otherwise flatten every correct bar in the graph.
 const DWORD daymaxseconds = 24 * 60 * 60;
 
 HWND tabctrl = NULL;
-HWND daygraph = NULL;
-HWND daylabel = NULL;
-HWND daytreeview = NULL;
-HBRUSH dayselbrush = NULL;
+HWND timegraph = NULL;
+HWND periodcombo = NULL;
+HWND normalizedcheck = NULL;
+HWND periodlabel = NULL;
+HWND periodtreeview = NULL;
+HWND tagtimelist = NULL;
+HBRUSH barselbrush = NULL;
 int tabstripheight = 0;
-int daygraphscroll = 0;
-int dayselected = -1;  // Day ordering of the day clicked on, -1 when none is.
+int timegraphscroll = 0;
+int graphperiod = PERIOD_DAY;
+bool graphnormalized = false;
 
 // Both tree views draw their bars from the same per node accumulation, which can only
 // hold one date range at a time, so the graph keeps its own copy of the day totals
-// while that accumulation gets narrowed to a single day for the day tree.
+// while that accumulation gets narrowed to the period the period tree shows.
 Vector<tagstat> graphdaystats;
 int graphstartday = 0;
-DWORD rangebargraphmax = 0, daybargraphmax = 0;
-bool accumisday = false;
+DWORD rangebargraphmax = 0, periodbargraphmax = 0;
+bool accumisperiod = false;
 
-struct daygraphinfo {
-    int numdays;
+// One bar per period that has any time on it: days without time get merged into the bar
+// of their period, periods without any get no bar at all.
+struct timebar {
+    tagstat stat;
+    int startday, endday;  // Day ordering of the first and last day with time in the period.
+};
+Vector<timebar> graphbars;
+int selectedday = -1;  // A day inside the selected period, -1 when no bar is selected.
+int selectedbar = -1;  // Index into graphbars of the bar holding it, -1 when there is none.
+
+DWORD periodmaxseconds() { return daymaxseconds * perioddays[graphperiod]; }
+
+// Days that share this land in the same bar. Month and year come straight out of the day
+// ordering, which packs both, but weeks have to be counted in actual days.
+int periodkey(int nday) {
+    switch (graphperiod) {
+        case PERIOD_WEEK: return weekordering(nday);
+        case PERIOD_MONTH: return nday / monthfactor;
+        case PERIOD_YEAR: return nday / yearfactor;
+        default: return nday;
+    }
+}
+
+// Keeps the selection on the same period across a rebuild, whether the bars changed
+// because of the date range or because of the period, and drops it when the day it was
+// on no longer has a bar.
+void findselectedbar() {
+    selectedbar = -1;
+    if (selectedday < 0) return;
+    loopv(i, graphbars) {
+        if (selectedday >= graphbars[i].startday && selectedday <= graphbars[i].endday) {
+            selectedbar = i;
+            return;
+        }
+    }
+    selectedday = -1;
+}
+
+void buildgraphbars() {
+    graphbars.setsize(0);
+    loopv(i, graphdaystats) {
+        tagstat &ds = graphdaystats[i];
+        if (!ds.total) continue;
+        int nday = graphstartday + i;
+        if (!graphbars.empty() && periodkey(graphbars.last().startday) == periodkey(nday)) {
+            timebar &tb = graphbars.last();
+            tb.endday = nday;
+            tb.stat.add(ds);
+            tb.stat.total += ds.total;
+        } else {
+            timebar tb;
+            tb.stat = ds;
+            tb.startday = tb.endday = nday;
+            graphbars.push(tb);
+        }
+    }
+    findselectedbar();
+}
+
+struct timegraphinfo {
+    int numbars;
     DWORD biggesttotal;
     int barwidth;
     int totalwidth;
 };
 
 // Bar sizing has to agree between painting, hit testing and the scroll bar range.
-daygraphinfo computedaygraph(int availwidth) {
-    daygraphinfo dg = {0, 0, 0, 0};
-    loopv(i, graphdaystats) {
-        DWORD sec = graphdaystats[i].total;
-        if (sec) {
-            dg.numdays++;
-            if (sec > dg.biggesttotal) dg.biggesttotal = sec;
-        }
+timegraphinfo computetimegraph(int availwidth) {
+    timegraphinfo tg = {graphbars.size(), 0, 0, 0};
+    DWORD maxsecs = periodmaxseconds();
+    loopv(i, graphbars) {
+        DWORD sec = graphbars[i].stat.total;
+        if (sec > tg.biggesttotal) tg.biggesttotal = sec;
     }
-    if (dg.biggesttotal > daymaxseconds) dg.biggesttotal = daymaxseconds;
-    if (!dg.numdays) return dg;
-    dg.barwidth = availwidth / dg.numdays;
-    if (dg.barwidth < daybarminwidth) dg.barwidth = daybarminwidth;
-    dg.totalwidth = dg.numdays * dg.barwidth;
-    return dg;
+    if (tg.biggesttotal > maxsecs) tg.biggesttotal = maxsecs;
+    if (!tg.numbars) return tg;
+    tg.barwidth = availwidth / tg.numbars;
+    if (tg.barwidth < barminwidth) tg.barwidth = barminwidth;
+    tg.totalwidth = tg.numbars * tg.barwidth;
+    return tg;
 }
 
-// The days get drawn inside a one pixel frame.
-RECT daygrapharea(HWND hwnd) {
+// The bars get drawn inside a one pixel frame.
+RECT timegrapharea(HWND hwnd) {
     RECT r;
     GetClientRect(hwnd, &r);
     InflateRect(&r, -1, -1);
     return r;
 }
 
-// The nth day that has any time on it, or -1 if there aren't that many.
-int nthdaywithdata(int n) {
-    if (n >= 0) loopv(i, graphdaystats) {
-            if (!graphdaystats[i].total) continue;
-            if (!n--) return i;
-        }
-    return -1;
-}
-
-void updatedaygraphscroll() {
-    if (!daygraph) return;
-    RECT r = daygrapharea(daygraph);
+void updatetimegraphscroll() {
+    if (!timegraph) return;
+    RECT r = timegrapharea(timegraph);
     int avail = r.right - r.left;
-    daygraphinfo dg = computedaygraph(avail);
+    timegraphinfo tg = computetimegraph(avail);
     SCROLLINFO si;
     si.cbSize = sizeof(SCROLLINFO);
     si.fMask = SIF_RANGE | SIF_PAGE | SIF_POS;
     si.nMin = 0;
-    si.nMax = dg.totalwidth ? dg.totalwidth - 1 : 0;
+    si.nMax = tg.totalwidth ? tg.totalwidth - 1 : 0;
     si.nPage = avail > 0 ? avail : 1;
-    si.nPos = daygraphscroll;
-    SetScrollInfo(daygraph, SB_HORZ, &si, TRUE);
+    si.nPos = timegraphscroll;
+    SetScrollInfo(timegraph, SB_HORZ, &si, TRUE);
     // The scroll bar clamps the position to the range it was just given.
-    daygraphscroll = GetScrollPos(daygraph, SB_HORZ);
+    timegraphscroll = GetScrollPos(timegraph, SB_HORZ);
 }
 
-void scrolldaygraph(HWND hwnd, int pos) {
+void scrolltimegraph(HWND hwnd, int pos) {
     SCROLLINFO si;
     si.cbSize = sizeof(SCROLLINFO);
     si.fMask = SIF_RANGE | SIF_PAGE;
@@ -137,105 +197,170 @@ void scrolldaygraph(HWND hwnd, int pos) {
     int maxpos = si.nMax - (int)si.nPage + 1;
     if (pos > maxpos) pos = maxpos;
     if (pos < si.nMin) pos = si.nMin;
-    if (pos == daygraphscroll) return;
-    daygraphscroll = pos;
+    if (pos == timegraphscroll) return;
+    timegraphscroll = pos;
     SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
     InvalidateRect(hwnd, NULL, TRUE);
 }
 
-void renderdaystat(HDC hdc, HWND hwnd) {
+void rendertimegraph(HDC hdc, HWND hwnd) {
     RECT r;
     GetClientRect(hwnd, &r);
     FillRect(hdc, &r, greybrush);
-    r = daygrapharea(hwnd);
+    r = timegrapharea(hwnd);
     FillRect(hdc, &r, whitebrush);
     int availh = r.bottom - r.top;
-    daygraphinfo dg = computedaygraph(r.right - r.left);
-    if (!dg.biggesttotal) return;
+    timegraphinfo tg = computetimegraph(r.right - r.left);
+    if (!tg.biggesttotal) return;
     // Wide bars get a wider gap between them, narrow ones would disappear into it.
-    int gap = dg.barwidth / 8;
+    int gap = tg.barwidth / 8;
     if (gap < 1) gap = 1;
     if (gap > 6) gap = 6;
-    int day = 0;
-    loop(i, dg.numdays) {
-        while (!graphdaystats[day].total) day++;
-        int x = r.left + i * dg.barwidth - daygraphscroll;
-        RECT rt = {x, r.top, x + dg.barwidth - gap, r.bottom};
+    DWORD maxsecs = periodmaxseconds();
+    loopv(i, graphbars) {
+        int x = r.left + i * tg.barwidth - timegraphscroll;
+        RECT rt = {x, r.top, x + tg.barwidth - gap, r.bottom};
         if (rt.right > r.left && rt.left < r.right) {
             if (rt.left < r.left) rt.left = r.left;
             if (rt.right > r.right) rt.right = r.right;
-            if (day + graphstartday == dayselected) FillRect(hdc, &rt, dayselbrush);
+            RECT bar = rt;
+            if (i == selectedbar) FillRect(hdc, &rt, barselbrush);
+            // A normalized bar is scaled to its own total, so the tags in it read as the
+            // proportion of the time that period holds instead of of the busiest one.
+            DWORD scale = graphnormalized ? graphbars[i].stat.total : tg.biggesttotal;
+            if (scale > maxsecs) scale = maxsecs;
+            // Bars only exist for periods with time on them, so the scale is never zero.
+            DWORD bartotal = graphbars[i].stat.total;
+            if (bartotal > scale) bartotal = scale;
+            int barheight = (int)((unsigned long long)bartotal * availh / scale);
+            // Bars hang centred rather than standing on the floor, which puts the middle
+            // of every one of them on the same line and so lines the tags inside bars of
+            // different heights up far better than a shared bottom edge does. A normalized
+            // bar already fills the height, which leaves it where it was.
+            int base = r.bottom - (availh - barheight) / 2;
+            rt.bottom = base;
+            DWORD acc = 0;
             loop(j, MAXTAGS) {
-                DWORD secs = graphdaystats[day].seconds[j];
-                if (secs > daymaxseconds) secs = daymaxseconds;
-                int sz = secs * availh / dg.biggesttotal;
-                if (sz) {
-                    rt.top = rt.bottom - sz;
-                    // A day over the 24 hour scale gets its bar truncated at the top.
-                    if (rt.top < r.top) rt.top = r.top;
+                acc += graphbars[i].stat.seconds[j];
+                // Measuring each segment's top off the running total instead of stacking
+                // heights keeps rounding from leaving a gap at the top of a bar that
+                // fills the whole scale.
+                DWORD upto = acc < scale ? acc : scale;
+                // A year of seconds times the pixels to scale it by doesn't fit 32 bits.
+                int top = base - (int)((unsigned long long)upto * availh / scale);
+                // A period over its own scale gets its bar truncated at the top.
+                if (top < r.top) top = r.top;
+                if (top < rt.bottom) {
+                    rt.top = top;
                     if (!tags[j].br) tags[j].br = CreateSolidBrush(tags[j].color);
                     FillRect(hdc, &rt, tags[j].br);
                     rt.bottom = rt.top;
                     if (rt.bottom <= r.top) break;
                 }
             }
+            // Normalized bars all reach the top, which leaves the selected one's
+            // backing fill covered up, so it gets an outline of its own as well.
+            if (i == selectedbar) FrameRect(hdc, &bar, (HBRUSH)GetStockObject(BLACK_BRUSH));
         }
-        day++;
     }
 }
 
 // Defined below, once the tree filling it shares with the statistics tab exists.
-void selectday(int nday);
+void selectbar(int bar);
 
-// Day ordering of the day drawn under the given point, or -1 if there is none.
-int daygraphhit(HWND hwnd, int x, int y) {
-    RECT r = daygrapharea(hwnd);
-    daygraphinfo dg = computedaygraph(r.right - r.left);
-    if (!dg.barwidth || x < r.left || x >= r.right || y < r.top || y >= r.bottom) return -1;
-    int index = (x - r.left + daygraphscroll) / dg.barwidth;
-    if (index >= dg.numdays) return -1;
-    int slot = nthdaywithdata(index);
-    return slot < 0 ? -1 : slot + graphstartday;
+// Index of the bar drawn under the given point, or -1 if there is none.
+int timegraphhit(HWND hwnd, int x, int y) {
+    RECT r = timegrapharea(hwnd);
+    timegraphinfo tg = computetimegraph(r.right - r.left);
+    if (!tg.barwidth || x < r.left || x >= r.right || y < r.top || y >= r.bottom) return -1;
+    int index = (x - r.left + timegraphscroll) / tg.barwidth;
+    return index < tg.numbars ? index : -1;
 }
 
-void setdaylabel() {
-    if (dayselected < 0) {
-        SetWindowTextA(daylabel, dayclickprompt);
+void setperiodlabel() {
+    if (selectedbar < 0) {
+        SetWindowTextA(periodlabel, barclickprompt);
         return;
     }
+    int nday = graphbars[selectedbar].startday;
     daydata d;
-    d.nday = dayselected;
+    // The first day of a week that has time on it isn't necessarily the Monday it started on.
+    d.nday = (WORD)(graphperiod == PERIOD_WEEK ? weekstart(nday) : nday);
     SYSTEMTIME st;
     d.createsystime(st);
     String s;
-    s.Format("%d-%d-%d", st.wYear, st.wMonth, st.wDay);
-    SetWindowTextA(daylabel, s.c_str());
+    switch (graphperiod) {
+        case PERIOD_WEEK: s.Format("Week of %d-%d-%d", st.wYear, st.wMonth, st.wDay); break;
+        case PERIOD_MONTH: s.Format("%d-%d", st.wYear, st.wMonth); break;
+        case PERIOD_YEAR: s.Format("%d", st.wYear); break;
+        default: s.Format("%d-%d-%d", st.wYear, st.wMonth, st.wDay); break;
+    }
+    SetWindowTextA(periodlabel, s.c_str());
 }
 
-LRESULT CALLBACK DayGraphProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+// The bars name their tags only by colour, so the selected one's tags get listed with
+// what each of them holds, most time first to match how they stack up in the bar.
+void filltagtimelist() {
+    if (!tagtimelist) return;
+    SendMessageA(tagtimelist, LVM_DELETEALLITEMS, 0, 0);
+    if (selectedbar < 0) return;
+    tagstat &ts = graphbars[selectedbar].stat;
+    int order[MAXTAGS], num = 0;
+    loop(i, MAXTAGS) if (ts.seconds[i]) order[num++] = i;
+    loop(i, num) loop(j, num - 1 - i) {
+        if (ts.seconds[order[j]] < ts.seconds[order[j + 1]]) {
+            int swap = order[j];
+            order[j] = order[j + 1];
+            order[j + 1] = swap;
+        }
+    }
+    loop(i, num) {
+        listitem(tagtimelist, tags[order[i]].name, i, order[i], LVM_INSERTITEMA);
+        // The time of day formatting is what the tree uses, at the level that always
+        // spells out hours and minutes so the column reads as one.
+        daydata d;
+        d.seconds = ts.seconds[order[i]];
+        String s;
+        d.format(s, 2);
+        LVITEMA lvi = {0};
+        lvi.mask = LVIF_TEXT;
+        lvi.iItem = i;
+        lvi.iSubItem = 1;
+        lvi.pszText = (char *)s.c_str();
+        SendMessageA(tagtimelist, LVM_SETITEMA, 0, (LPARAM)&lvi);
+    }
+}
+
+// Everything in the panel beside the graph is about whichever bar is selected.
+void showselectedperiod() {
+    setperiodlabel();
+    filltagtimelist();
+}
+
+LRESULT CALLBACK TimeGraphProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
         case WM_PAINT: {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hwnd, &ps);
-            renderdaystat(hdc, hwnd);
+            rendertimegraph(hdc, hwnd);
             EndPaint(hwnd, &ps);
             return 0;
         }
         case WM_SIZE:
-            updatedaygraphscroll();
+            updatetimegraphscroll();
             InvalidateRect(hwnd, NULL, TRUE);
             return 0;
         case WM_LBUTTONDOWN: {
             // So the wheel and the arrow keys scroll the graph the user just clicked on.
             SetFocus(hwnd);
-            int nday = daygraphhit(hwnd, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-            if (nday >= 0) selectday(nday);
+            int bar = timegraphhit(hwnd, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+            if (bar >= 0) selectbar(bar);
             return 0;
         }
         case WM_GETDLGCODE: return DLGC_WANTARROWS;
         case WM_MOUSEWHEEL:
-            scrolldaygraph(hwnd, daygraphscroll - GET_WHEEL_DELTA_WPARAM(wParam) *
-                                                      daygraphscrollstep / WHEEL_DELTA);
+            scrolltimegraph(hwnd, timegraphscroll - GET_WHEEL_DELTA_WPARAM(wParam) *
+                                                        timegraphscrollstep / WHEEL_DELTA);
             return 0;
         case WM_KEYDOWN: {
             SCROLLINFO si;
@@ -243,12 +368,16 @@ LRESULT CALLBACK DayGraphProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             si.fMask = SIF_RANGE | SIF_PAGE;
             GetScrollInfo(hwnd, SB_HORZ, &si);
             switch (wParam) {
-                case VK_LEFT: scrolldaygraph(hwnd, daygraphscroll - daygraphscrollstep); return 0;
-                case VK_RIGHT: scrolldaygraph(hwnd, daygraphscroll + daygraphscrollstep); return 0;
-                case VK_PRIOR: scrolldaygraph(hwnd, daygraphscroll - si.nPage); return 0;
-                case VK_NEXT: scrolldaygraph(hwnd, daygraphscroll + si.nPage); return 0;
-                case VK_HOME: scrolldaygraph(hwnd, si.nMin); return 0;
-                case VK_END: scrolldaygraph(hwnd, si.nMax); return 0;
+                case VK_LEFT:
+                    scrolltimegraph(hwnd, timegraphscroll - timegraphscrollstep);
+                    return 0;
+                case VK_RIGHT:
+                    scrolltimegraph(hwnd, timegraphscroll + timegraphscrollstep);
+                    return 0;
+                case VK_PRIOR: scrolltimegraph(hwnd, timegraphscroll - si.nPage); return 0;
+                case VK_NEXT: scrolltimegraph(hwnd, timegraphscroll + si.nPage); return 0;
+                case VK_HOME: scrolltimegraph(hwnd, si.nMin); return 0;
+                case VK_END: scrolltimegraph(hwnd, si.nMax); return 0;
             }
             break;
         }
@@ -259,8 +388,8 @@ LRESULT CALLBACK DayGraphProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             GetScrollInfo(hwnd, SB_HORZ, &si);
             int pos = si.nPos;
             switch (LOWORD(wParam)) {
-                case SB_LINELEFT: pos -= daygraphscrollstep; break;
-                case SB_LINERIGHT: pos += daygraphscrollstep; break;
+                case SB_LINELEFT: pos -= timegraphscrollstep; break;
+                case SB_LINERIGHT: pos += timegraphscrollstep; break;
                 case SB_PAGELEFT: pos -= si.nPage; break;
                 case SB_PAGERIGHT: pos += si.nPage; break;
                 case SB_THUMBTRACK:
@@ -269,22 +398,22 @@ LRESULT CALLBACK DayGraphProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
                 case SB_RIGHT: pos = si.nMax; break;
                 default: return 0;
             }
-            scrolldaygraph(hwnd, pos);
+            scrolltimegraph(hwnd, pos);
             return 0;
         }
     }
     return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
-void registerdaygraphclass() {
+void registertimegraphclass() {
     WNDCLASSEXA wcex;
     ZeroMemory(&wcex, sizeof(wcex));
     wcex.cbSize = sizeof(WNDCLASSEXA);
-    wcex.lpfnWndProc = DayGraphProc;
+    wcex.lpfnWndProc = TimeGraphProc;
     wcex.hInstance = hInst;
     wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wcex.lpszClassName = daygraphclass;
-    if (!RegisterClassExA(&wcex)) panic("PT: Cannot register day graph window class");
+    wcex.lpszClassName = timegraphclass;
+    if (!RegisterClassExA(&wcex)) panic("PT: Cannot register time graph window class");
 }
 
 void redrawtreeview() {
@@ -498,26 +627,30 @@ void recompaccum() {
 }
 
 // Accumulates the whole date range: what the statistics tree draws from, and where
-// the day graph takes its copy of the per day totals.
+// the time graph takes its copy of the per day totals.
 void accumulaterange() {
     recompaccum();
     loopv(i, daystats) daystats[i].sum();
     graphdaystats.setsize(0);
     loopv(i, daystats) graphdaystats.push(daystats[i]);
     graphstartday = starttime;
+    buildgraphbars();
     maxsecondsforbargraph = rangebargraphmax;
-    accumisday = false;
+    accumisperiod = false;
 }
 
-// Narrows the accumulation to the day the day tree shows, leaving the graph on its copy.
-void accumulateday() {
+// Narrows the accumulation to the period the period tree shows, leaving the graph on
+// its copy. The days without time inside the period contribute nothing, so the bar's
+// outermost days with time are range enough.
+void accumulateperiod() {
     int savedstart = starttime, savedend = endtime;
-    starttime = endtime = dayselected;
+    starttime = graphbars[selectedbar].startday;
+    endtime = graphbars[selectedbar].endday;
     recompaccum();
     starttime = savedstart;
     endtime = savedend;
-    maxsecondsforbargraph = daybargraphmax;
-    accumisday = true;
+    maxsecondsforbargraph = periodbargraphmax;
+    accumisperiod = true;
 }
 
 // Puts whatever is currently accumulated in a tree view.
@@ -529,16 +662,16 @@ void filltree(HWND tv) {
     settingtreesel = false;
 }
 
-void renderdaytree() {
-    if (!daytreeview) return;
-    if (dayselected < 0) {
-        TreeView_DeleteAllItems(daytreeview);
-        if (accumisday) accumulaterange();
+void renderperiodtree() {
+    if (!periodtreeview) return;
+    if (selectedbar < 0) {
+        TreeView_DeleteAllItems(periodtreeview);
+        if (accumisperiod) accumulaterange();
         return;
     }
-    accumulateday();
-    filltree(daytreeview);
-    daybargraphmax = maxsecondsforbargraph;
+    accumulateperiod();
+    filltree(periodtreeview);
+    periodbargraphmax = maxsecondsforbargraph;
 }
 
 void rendertree(HWND hDlg) {
@@ -547,28 +680,46 @@ void rendertree(HWND hDlg) {
     // The items are all new ones, so the selection has to be put back onto them.
     refreshtreeselection();
     rangebargraphmax = maxsecondsforbargraph;
-    if (daygraph) {
-        // A day that dropped out of the range or lost all its time is no longer selectable.
-        if (dayselected >= 0 &&
-            (dayselected < graphstartday || dayselected - graphstartday >= graphdaystats.size() ||
-             !graphdaystats[dayselected - graphstartday].total))
-            dayselected = -1;
-        setdaylabel();
-        // The day tree is hidden here, it gets rebuilt when its tab is shown again.
-        updatedaygraphscroll();
-        InvalidateRect(daygraph, NULL, TRUE);
+    if (timegraph) {
+        // The bars were just rebuilt, which is where a selection that fell out of the
+        // range or lost all its time gets dropped.
+        showselectedperiod();
+        // The period tree is hidden here, it gets rebuilt when its tab is shown again.
+        updatetimegraphscroll();
+        InvalidateRect(timegraph, NULL, TRUE);
     }
 }
 
-void selectday(int nday) {
-    if (nday == dayselected) return;
-    dayselected = nday;
-    setdaylabel();
-    renderdaytree();
-    InvalidateRect(daygraph, NULL, TRUE);
+void selectbar(int bar) {
+    if (bar == selectedbar) return;
+    selectedbar = bar;
+    selectedday = bar < 0 ? -1 : graphbars[bar].startday;
+    showselectedperiod();
+    renderperiodtree();
+    InvalidateRect(timegraph, NULL, TRUE);
 }
 
-// The tab strip spans the top, the page below it holds either the tree or the day graph.
+void setgraphnormalized(bool normalized) {
+    if (normalized == graphnormalized) return;
+    graphnormalized = normalized;
+    InvalidateRect(timegraph, NULL, TRUE);
+}
+
+// Regrouping the same days into longer or shorter bars keeps whichever period the
+// selected day ended up in, so the tree next to the graph follows along.
+void setgraphperiod(int period) {
+    if (period == graphperiod) return;
+    graphperiod = period;
+    buildgraphbars();
+    showselectedperiod();
+    renderperiodtree();
+    updatetimegraphscroll();
+    // Bars of a different width put the interesting end of the range elsewhere.
+    SendMessageA(timegraph, WM_HSCROLL, SB_RIGHT, 0);
+    InvalidateRect(timegraph, NULL, TRUE);
+}
+
+// The tab strip spans the top, the page below it holds either the tree or the time graph.
 void layoutstats(HWND hDlg) {
     RECT r;
     GetClientRect(hDlg, &r);
@@ -579,33 +730,62 @@ void layoutstats(HWND hDlg) {
     int treeleft = rsl.right - rsl.left + 12;
     MoveWindow(treeview, treeleft, pagetop, r.right - treeleft, r.bottom - pagetop - controlmargin,
                TRUE);
-    // The day of the graph that was clicked on gets a quarter of the width to itself.
+    // The graph's own controls and the bar of it that was clicked on get a quarter of
+    // the width to themselves.
     int panelright = r.right / 4;
+    int panelwidth = panelright - controlmargin;
+    RECT rc;
+    GetWindowRect(periodcombo, &rc);
+    int comboheight = rc.bottom - rc.top;
+    int itemheight = (int)SendMessageA(periodcombo, CB_GETITEMHEIGHT, 0, 0);
+    // The height a combo gets sized to covers its drop down list, the control itself
+    // stays at the closed height that was just read back off it.
+    MoveWindow(periodcombo, controlmargin, pagetop, panelwidth,
+               comboheight + PERIOD_NUM * itemheight, TRUE);
+    RECT rn;
+    GetWindowRect(normalizedcheck, &rn);
+    int checkheight = rn.bottom - rn.top;
+    int checktop = pagetop + comboheight + controlmargin;
+    MoveWindow(normalizedcheck, controlmargin, checktop, panelwidth, checkheight, TRUE);
     RECT rl;
-    GetWindowRect(daylabel, &rl);
+    GetWindowRect(periodlabel, &rl);
     int labelheight = rl.bottom - rl.top;
-    MoveWindow(daylabel, controlmargin, pagetop, panelright - controlmargin, labelheight, TRUE);
-    int daytreetop = pagetop + labelheight + controlmargin;
-    MoveWindow(daytreeview, controlmargin, daytreetop, panelright - controlmargin,
-               r.bottom - daytreetop - controlmargin, TRUE);
+    int labeltop = checktop + checkheight + controlmargin;
+    MoveWindow(periodlabel, controlmargin, labeltop, panelwidth, labelheight, TRUE);
+    int periodtreetop = labeltop + labelheight + controlmargin;
+    // The tag list under the tree gets a third of the height the two of them share.
+    int panelrest = r.bottom - controlmargin - periodtreetop - controlmargin;
+    if (panelrest < 0) panelrest = 0;
+    int listheight = panelrest / 3;
+    int treeheight = panelrest - listheight;
+    MoveWindow(periodtreeview, controlmargin, periodtreetop, panelwidth, treeheight, TRUE);
+    int listtop = periodtreetop + treeheight + controlmargin;
+    MoveWindow(tagtimelist, controlmargin, listtop, panelwidth, listheight, TRUE);
+    // The time column keeps its width, the tag names take whatever is left over.
+    int timecol = 70;
+    int namecol = panelwidth - timecol - GetSystemMetrics(SM_CXVSCROLL);
+    if (namecol < 40) namecol = 40;
+    SendMessageA(tagtimelist, LVM_SETCOLUMNWIDTH, 0, namecol);
+    SendMessageA(tagtimelist, LVM_SETCOLUMNWIDTH, 1, timecol);
     int graphleft = panelright + controlmargin;
-    MoveWindow(daygraph, graphleft, pagetop, r.right - graphleft - controlmargin,
+    MoveWindow(timegraph, graphleft, pagetop, r.right - graphleft - controlmargin,
                r.bottom - pagetop - controlmargin, TRUE);
     InvalidateRect(hDlg, NULL, TRUE);
 }
 
 void showtab(HWND hDlg, int tab) {
     // Only one tree is on screen at a time, so the accumulation they share follows the tab.
-    if (tab == TAB_DAYS)
-        renderdaytree();
-    else if (accumisday)
+    if (tab == TAB_TIME)
+        renderperiodtree();
+    else if (accumisperiod)
         accumulaterange();
     // Only the immediate children belong to a page, anything below them (such as
     // the tag list's label editor) is the business of the control owning it.
     for (HWND h = GetWindow(hDlg, GW_CHILD); h; h = GetWindow(h, GW_HWNDNEXT)) {
         if (h == tabctrl) continue;
-        bool onday = h == daygraph || h == daylabel || h == daytreeview;
-        ShowWindow(h, onday == (tab == TAB_DAYS) ? SW_SHOW : SW_HIDE);
+        bool ontime = h == timegraph || h == periodcombo || h == normalizedcheck ||
+                      h == periodlabel || h == periodtreeview || h == tagtimelist;
+        ShowWindow(h, ontime == (tab == TAB_TIME) ? SW_SHOW : SW_HIDE);
     }
 }
 
@@ -789,6 +969,63 @@ void mergeselection(HWND hDlg) {
     }
 }
 
+// The nodes an item on screen stands for, with duplicates dropped and anything already
+// covered by a selected ancestor left out, as deleting that frees it too. The caller has to
+// empty this with setsize_nd, since a Vector deletes the pointers left in it.
+void getselectedviewchains(Vector<node *> &v) {
+    Vector<node *> heads;
+    loopselected(n) {
+        node *f = n->firstinviewchain();
+        // The root has no parent to be taken out of, so it can never be deleted.
+        if (!f->parent) continue;
+        bool dup = false;
+        loopv(i, heads) if (heads[i] == f) dup = true;
+        if (!dup) heads.push(f);
+    }
+    loopv(i, heads) {
+        bool covered = false;
+        loopv(j, heads) if (heads[j] != heads[i] && heads[j]->isancestorof(heads[i]))
+            covered = true;
+        if (!covered) v.push(heads[i]);
+    }
+    heads.setsize_nd(0);
+}
+
+// Takes the selected nodes out of the database along with everything below them. The
+// tracker adds a node back the next time that app or site comes up, so what this loses for
+// good is the time that was on them.
+void deleteselection(HWND hDlg) {
+    Vector<node *> todelete;
+    getselectedviewchains(todelete);
+    if (todelete.empty()) {
+        todelete.setsize_nd(0);
+        MessageBoxA(hDlg, "This deletes the selected nodes, so it needs a selection to work on.",
+                    "Delete Nodes", MB_OK | MB_ICONEXCLAMATION);
+        return;
+    }
+    String msg;
+    msg.Format("Delete %d selected node%s, everything below %s, and all the time recorded on "
+               "any of it?\r\n\r\nThis covers every date rather than just the range in view, "
+               "and cannot be undone.",
+               todelete.size(), todelete.size() == 1 ? "" : "s",
+               todelete.size() == 1 ? "it" : "them");
+    // The message box pumps messages, so the tracker can run while it is up. It only ever
+    // adds nodes, which leaves everything picked above where it was.
+    if (MessageBoxA(hDlg, msg.c_str(), "Delete Nodes", MB_OKCANCEL | MB_ICONWARNING) != IDOK) {
+        todelete.setsize_nd(0);
+        return;
+    }
+    loopv(i, todelete) todelete[i]->parent->remove(todelete[i]);
+    todelete.setsize_nd(0);
+    // The nodes that went away took the selection with them.
+    selectonly(NULL);
+    selectednode = prevselectednode = NULL;
+    rendertree(hDlg);
+    // The period tree has items of its own on these nodes, and it draws from them, so while
+    // it is the tree on screen it gets rebuilt here rather than when its tab comes back.
+    if (TabCtrl_GetCurSel(tabctrl) == TAB_TIME) renderperiodtree();
+}
+
 const char *menuitemtip(UINT id) {
     switch (id) {
         case MENU_SELECTALL:
@@ -813,6 +1050,10 @@ const char *menuitemtip(UINT id) {
             return "Merges all selected nodes into whichever of them was added to most "
                    "recently, for one app or site that has been recorded under several names."
                    "\r\nWarning: irreversible, the other nodes are deleted.";
+        case MENU_DELETE:
+            return "Removes every selected node and everything below it from the database, "
+                   "with all the time recorded on any of it.\r\nWarning: irreversible, and "
+                   "it covers every date rather than just the range in view.";
     }
     return NULL;
 }
@@ -837,7 +1078,8 @@ void showmenutip(const char *text) {
     SendMessageA(menutip, TTM_TRACKACTIVATE, TRUE, (LPARAM)&ti);
 }
 
-// The keys below are the tree's own, the menu is there to say they exist.
+// The keys below are the tree's own, the menu is there to say they exist. Delete has none,
+// so the menu is the only way to reach it.
 void createeditmenu(HWND hDlg) {
     HMENU edit = CreatePopupMenu();
     AppendMenuA(edit, MF_STRING, MENU_SELECTALL, "Select &All\tCtrl+A");
@@ -849,6 +1091,8 @@ void createeditmenu(HWND hDlg) {
     AppendMenuA(edit, MF_SEPARATOR, 0, NULL);
     AppendMenuA(edit, MF_STRING, MENU_MERGESUB, "Merge &Substring Siblings\tCtrl+P");
     AppendMenuA(edit, MF_STRING, MENU_MERGE, "&Merge Nodes\tCtrl+M");
+    AppendMenuA(edit, MF_SEPARATOR, 0, NULL);
+    AppendMenuA(edit, MF_STRING, MENU_DELETE, "&Delete Nodes...");
     HMENU bar = CreateMenu();
     AppendMenuA(bar, MF_POPUP, (UINT_PTR)edit, "&Edit");
     SetMenu(hDlg, bar);
@@ -990,14 +1234,16 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
             treeviewproc =
                 (WNDPROC)SetWindowLongPtr(treeview, GWLP_WNDPROC, (LONG_PTR)TreeViewProc);
             createeditmenu(hDlg);
-            daylabel = GetDlgItem(hDlg, IDC_STATICHO);
+            periodlabel = GetDlgItem(hDlg, IDC_STATICHO);
+            periodcombo = GetDlgItem(hDlg, IDC_COMBO2);
+            normalizedcheck = GetDlgItem(hDlg, IDC_CHECK_NORMALIZED);
             tabctrl = GetDlgItem(hDlg, IDC_TAB1);
             TCITEMA tci;
             tci.mask = TCIF_TEXT;
             tci.pszText = "Statistics";
             SendMessageA(tabctrl, TCM_INSERTITEMA, TAB_STATISTICS, (LPARAM)&tci);
-            tci.pszText = "Day Stats";
-            SendMessageA(tabctrl, TCM_INSERTITEMA, TAB_DAYS, (LPARAM)&tci);
+            tci.pszText = "Time View";
+            SendMessageA(tabctrl, TCM_INSERTITEMA, TAB_TIME, (LPARAM)&tci);
             RECT tabrect;
             GetWindowRect(tabctrl, &tabrect);
             tabstripheight = tabrect.bottom - tabrect.top;
@@ -1005,20 +1251,42 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
             RECT tabpage = {0, 0, 100, 100};
             TabCtrl_AdjustRect(tabctrl, FALSE, &tabpage);
             if (tabpage.top > tabstripheight) tabstripheight = tabpage.top;
-            daygraphscroll = 0;
-            dayselected = -1;
-            if (!dayselbrush) dayselbrush = CreateSolidBrush(0xE8E8E8);
-            daygraph = CreateWindowExA(0, daygraphclass, "", WS_CHILD | WS_HSCROLL | WS_TABSTOP, 0,
-                                       0, 0, 0, hDlg, NULL, hInst, NULL);
-            if (!daygraph) panic("PT: Cannot create day graph window");
-            daytreeview = CreateWindowExA(
-                WS_EX_CLIENTEDGE, WC_TREEVIEWA, "",
-                WS_CHILD | WS_TABSTOP | WS_HSCROLL | TVS_HASBUTTONS | TVS_HASLINES |
-                    TVS_LINESATROOT | TVS_DISABLEDRAGDROP | TVS_SHOWSELALWAYS,
-                0, 0, 0, 0, hDlg, (HMENU)IDC_TREE_DAY, hInst, NULL);
-            if (!daytreeview) panic("PT: Cannot create day tree window");
+            timegraphscroll = 0;
+            selectedday = -1;
+            selectedbar = -1;
+            graphperiod = PERIOD_DAY;
+            loop(i, PERIOD_NUM) SendMessageA(periodcombo, CB_ADDSTRING, 0, (LPARAM)periodnames[i]);
+            SendMessageA(periodcombo, CB_SETCURSEL, graphperiod, 0);
+            graphnormalized = false;
+            CheckDlgButton(hDlg, IDC_CHECK_NORMALIZED, BST_UNCHECKED);
+            if (!barselbrush) barselbrush = CreateSolidBrush(0xE8E8E8);
+            timegraph = CreateWindowExA(0, timegraphclass, "", WS_CHILD | WS_HSCROLL | WS_TABSTOP,
+                                        0, 0, 0, 0, hDlg, NULL, hInst, NULL);
+            if (!timegraph) panic("PT: Cannot create time graph window");
+            periodtreeview =
+                CreateWindowExA(WS_EX_CLIENTEDGE, WC_TREEVIEWA, "",
+                                WS_CHILD | WS_TABSTOP | WS_HSCROLL | TVS_HASBUTTONS | TVS_HASLINES |
+                                    TVS_LINESATROOT | TVS_DISABLEDRAGDROP | TVS_SHOWSELALWAYS,
+                                0, 0, 0, 0, hDlg, (HMENU)IDC_TREE_DAY, hInst, NULL);
+            if (!periodtreeview) panic("PT: Cannot create period tree window");
+            tagtimelist = CreateWindowExA(
+                WS_EX_CLIENTEDGE, WC_LISTVIEWA, "",
+                WS_CHILD | WS_TABSTOP | LVS_REPORT | LVS_SINGLESEL | LVS_SHAREIMAGELISTS |
+                    LVS_NOSORTHEADER,
+                0, 0, 0, 0, hDlg, (HMENU)IDC_LIST_TAGTIME, hInst, NULL);
+            if (!tagtimelist) panic("PT: Cannot create tag time list window");
+            LVCOLUMNA lvc = {0};
+            lvc.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
+            lvc.pszText = "Tag";
+            lvc.cx = 100;
+            SendMessageA(tagtimelist, LVM_INSERTCOLUMNA, 0, (LPARAM)&lvc);
+            lvc.pszText = "Time";
+            lvc.cx = 70;
+            lvc.iSubItem = 1;
+            SendMessageA(tagtimelist, LVM_INSERTCOLUMNA, 1, (LPARAM)&lvc);
             // Controls made outside the dialog template don't get its font.
-            SendMessageA(daytreeview, WM_SETFONT, SendMessageA(hDlg, WM_GETFONT, 0, 0), TRUE);
+            SendMessageA(periodtreeview, WM_SETFONT, SendMessageA(hDlg, WM_GETFONT, 0, 0), TRUE);
+            SendMessageA(tagtimelist, WM_SETFONT, SendMessageA(hDlg, WM_GETFONT, 0, 0), TRUE);
             endtime = now();
             rendertree(hDlg);
             taglist = GetDlgItem(hDlg, IDC_LIST1);
@@ -1039,6 +1307,8 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
                 ReleaseDC(NULL, hdc);
             }
             ListView_SetImageList(taglist, tagimages, LVSIL_SMALL);
+            // Sharing it is what LVS_SHAREIMAGELISTS on both of them is for.
+            ListView_SetImageList(tagtimelist, tagimages, LVSIL_SMALL);
             loop(i, MAXTAGS) listitem(taglist, tags[i].name, i, i, LVM_INSERTITEMA);
             foldslider = GetDlgItem(hDlg, IDC_SLIDER1);
             SendMessageA(foldslider, TBM_SETRANGE, FALSE, (LPARAM)MAKELONG(1, 5));
@@ -1064,16 +1334,19 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
             // WM_SIZE arrives before the controls it needs exist, so lay out here too.
             layoutstats(hDlg);
             // Of a range that doesn't fit, the most recent days are the interesting ones.
-            SendMessageA(daygraph, WM_HSCROLL, SB_RIGHT, 0);
+            SendMessageA(timegraph, WM_HSCROLL, SB_RIGHT, 0);
             return (INT_PTR)TRUE;
         }
         case WM_DESTROY:
             statsdialog = NULL;
             menutip = NULL;
             tabctrl = NULL;
-            daygraph = NULL;
-            daylabel = NULL;
-            daytreeview = NULL;
+            timegraph = NULL;
+            periodcombo = NULL;
+            normalizedcheck = NULL;
+            periodlabel = NULL;
+            periodtreeview = NULL;
+            tagtimelist = NULL;
             break;
         case WM_SIZING: {
             int min_x = 400;
@@ -1099,7 +1372,7 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
             return TRUE;
         }
         case WM_SIZE: {
-            if (daygraph) layoutstats(hDlg);
+            if (timegraph) layoutstats(hDlg);
             break;
         }
         case WM_LBUTTONUP: {
@@ -1176,6 +1449,20 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
                     }
                     break;
                 }
+                case IDC_CHECK_NORMALIZED: {
+                    setgraphnormalized(IsDlgButtonChecked(hDlg, IDC_CHECK_NORMALIZED) != 0);
+                    return (INT_PTR)TRUE;
+                }
+                case IDC_COMBO2: {
+                    if (HIWORD(wParam) == CBN_SELENDOK) {
+                        int sel = SendMessage(periodcombo, CB_GETCURSEL, 0, 0);
+                        if (sel != CB_ERR) {
+                            setgraphperiod(sel);
+                            return (INT_PTR)TRUE;
+                        }
+                    }
+                    break;
+                }
                 case IDC_EDIT8: {
                     String old(filterstrcontents);
                     getcontroltext(filterstr, filterstrcontents, 100);
@@ -1213,6 +1500,10 @@ INT_PTR CALLBACK Stats(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
                 }
                 case MENU_MERGE: {
                     mergeselection(hDlg);
+                    return (INT_PTR)TRUE;
+                }
+                case MENU_DELETE: {
+                    deleteselection(hDlg);
                     return (INT_PTR)TRUE;
                 }
                 case IDC_BUTTON3: {
